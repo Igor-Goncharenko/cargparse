@@ -8,10 +8,10 @@ extern "C" {
 #include <stdbool.h>
 
 typedef enum {
-    CARGPARSE_OPTION_POSITIONAL = 0,
-    CARGPARSE_OPTION_BOOL,
-    CARGPARSE_OPTION_INT,
-    CARGPARSE_OPTION_STRING,
+    CARGPARSE_OPTION_TYPE_POS = 0,
+    CARGPARSE_OPTION_TYPE_BOOL,
+    CARGPARSE_OPTION_TYPE_INT,
+    CARGPARSE_OPTION_TYPE_STR,
 } cargparse_option_type_e;
 
 typedef struct {
@@ -55,6 +55,18 @@ typedef struct {
         _long_name, \
         _help, \
     }
+
+#define CARGPARSE_OPTION_INT(_short_name, _long_name, _help) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_INT, _short_name, _long_name, _help)
+
+#define CARGPARSE_OPTION_BOOL(_short_name, _long_name, _help) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_BOOL, _short_name, _long_name, _help)
+
+#define CARGPARSE_OPTION_STRING(_short_name, _long_name, _help) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_STR, _short_name, _long_name, _help)
+
+#define CARGPARSE_OPTION_POSITIONAL(_long_name, _help) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, -1, _long_name, _help)
 
 void cargparse_print_help(const cargparse_t *const self);
 

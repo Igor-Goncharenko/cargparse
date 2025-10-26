@@ -12,12 +12,12 @@ int main(int argc, char **argv) {
             "test [OPTION]... [FILE]..\ntest [FILE]...",
             "Description example.",
             "Epilog example.",
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_INT, 'n', "number", "number of something"),
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_BOOL, -1, "bool", "bool for something"),
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_STRING, -1, "some-str", "some string"),
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "positional1", "positional argument example"),
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "pos2", "positional argument example number 2"),
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "posit3", "positional argument example number 3"),
+            CARGPARSE_OPTION_INT('n', "number", "number of something"),
+            CARGPARSE_OPTION_BOOL(-1, "bool", "bool for something"),
+            CARGPARSE_OPTION_STRING(-1, "some-str", "some string"),
+            CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
+            CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2"),
+            CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3"),
     );
 
     cargparse_print_help(&argparse);
