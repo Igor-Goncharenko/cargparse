@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
+
 typedef enum {
     CARGPARSE_OPTION_BOOL = 0,
     CARGPARSE_OPTION_INT,
@@ -21,6 +23,7 @@ typedef struct {
 typedef struct {
     int valueint;
     char *valuestr;
+    bool valuebool;
 } cargparse_parse_res_t;
 
 typedef struct {
@@ -54,7 +57,7 @@ typedef struct {
 
 void cargparse_print_help(const cargparse_t *const self);
 
-int cargparse_parse(const cargparse_t *const self, const int argc, char **argv);
+int cargparse_parse(cargparse_t *const self, const int argc, char **argv);
 
 #ifdef __cplusplus
 }
