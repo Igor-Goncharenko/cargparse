@@ -23,7 +23,7 @@ typedef struct {
 
 typedef struct {
     int valueint;
-    char *valuestr;
+    const char *valuestr;
     bool valuebool;
 } cargparse_parse_res_t;
 

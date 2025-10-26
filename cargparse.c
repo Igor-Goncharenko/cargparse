@@ -104,44 +104,67 @@ int cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
     int i, opt_idx, last_pos_i;
     bool after_double_hyphen;
     cargparse_arg_type_t arg_type;
+    const char *arg;
 
     opt_idx = -1;
     last_pos_i = -1;
     after_double_hyphen = false;
 
     for (i = 1; i < argc; i++) {
-        arg_type = _cargparse_get_arg_type(argv[i]);
+        arg = argv[i];
+        arg_type = _cargparse_get_arg_type(arg);
+
+        if (after_double_hyphen) {
+            last_pos_i = _cargparse_get_next_positional_opt(self, last_pos_i);
+            if (last_pos_i != -1) {
+                self->parse_res[last_pos_i].valuestr = arg;
+            } else {
+                fprintf(stderr, "Error: Unexpected positional argument '%s'\n", arg);
+                return -1;
+            }
+            continue;
+        }
 
         switch(arg_type) {
             case CARGPARSE_ARG_POS:
-                if (opt_idx == -1) {    /* parse as positional argument */
+                if (opt_idx == -1) { /* parse as positional argument */
                     last_pos_i = _cargparse_get_next_positional_opt(self, last_pos_i);
                     if (last_pos_i != -1) {
-                        self->parse_res[last_pos_i].valuestr = argv[i];
+                        self->parse_res[last_pos_i].valuestr = arg;
                     } else {
+                        fprintf(stderr, "Error: Unexpected positional argument '%s'\n", arg);
                         return -1;
                     }
-                } else {                /* parse with short/long argument which was received earlier */
-                    self->parse_res[opt_idx].valuestr = argv[i];
+                } else { /* parse with short/long argument which was received earlier */
+                    self->parse_res[opt_idx].valuestr = arg;
                     opt_idx = -1;
                 }
                 break;
             case CARGPARSE_ARG_SHORT:
-                opt_idx = _cargparse_search_short_option(self, *(argv[i] + 1));
+                opt_idx = _cargparse_search_short_option(self, *(arg + 1));
+                if (opt_idx == -1) {
+                    fprintf(stderr, "Error: unknown option '-%c'\n", *(arg + 1));
+                    return -1;
+                }
                 if (self->options[opt_idx].type == CARGPARSE_OPTION_BOOL) {
                     self->parse_res[opt_idx].valuebool = true;
-                    opt_idx = -1;       /* we dont need to parse next argv in bool */
+                    opt_idx = -1; /* we dont need to parse next argv in bool */
                 }
                 break;
             case CARGPARSE_ARG_LONG:
-                opt_idx = _cargparse_search_long_option(self, argv[i] + 2);
+                opt_idx = _cargparse_search_long_option(self, arg + 2);
+                if (opt_idx == -1) {
+                    fprintf(stderr, "Error: unknown option '--%s'\n", arg);
+                    return -1;
+                }
                 if (self->options[opt_idx].type == CARGPARSE_OPTION_BOOL) {
                     self->parse_res[opt_idx].valuebool = true;
-                    opt_idx = -1;       /* we dont need to parse next argv in bool */
+                    opt_idx = -1; /* we dont need to parse next argv in bool */
                 }
                 break;
             case CARGPARSE_ARG_DOUBLE_HYPHEN:
                 after_double_hyphen = true;
+                opt_idx = -1;
                 break;
             case CARGPARSE_ARG_INCORRECT:
                 break;
