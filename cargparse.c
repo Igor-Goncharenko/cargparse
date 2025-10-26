@@ -11,6 +11,26 @@ typedef enum {
     CARGPARSE_ARG_DOUBLE_HYPHEN,
 } cargparse_arg_type_t;
 
+static void _cargparse_print_option(const cargparse_option_t *opt) {
+    const char *OPT_TYPE_STR[] = { "POS", "BOOL", "INT", "STR" };
+
+    printf("  %4s  ", OPT_TYPE_STR[opt->type]);
+
+    if (opt->type == CARGPARSE_OPTION_POSITIONAL || opt->short_name == -1) {
+        printf("    ");
+    } else {
+        printf("-%c  ", opt->short_name);
+    }
+
+    if (opt->type == CARGPARSE_OPTION_POSITIONAL || !opt->long_name) {
+        printf("%17s  ", "");
+    } else {
+        printf("--%-15s  ", opt->long_name);
+    }
+
+    printf("%s\n", opt->help ? opt->help : "");
+}
+
 void cargparse_print_help(const cargparse_t *const self) {
     int i;
     const char *ch_ptr_start, *ch_ptr_end;
@@ -39,8 +59,7 @@ void cargparse_print_help(const cargparse_t *const self) {
     }
     if (self->n_options > 0) {
         for (i = 0; i < self->n_options; i++) {
-            printf("  -%c --%s %s\n", self->options[i].short_name, self->options[i].long_name,
-                   self->options[i].help);
+            _cargparse_print_option(&self->options[i]);
         }
         printf("\n");
     }

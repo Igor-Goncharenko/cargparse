@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-/* ./argparse_example pos1 -n 10 -b pos2 -- pos3 */
+/* ./argparse_example pos1 -n 10 --bool pos2 -- pos3 */
 int main(int argc, char **argv) {
     int i;
 
@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
             "Description example.",
             "Epilog example.",
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_INT, 'n', "number", "number of something"),
-            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_BOOL, 'b', "bool", "bool for something"),
+            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_BOOL, -1, "bool", "bool for something"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "positional1", "positional argument example"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "pos2", "positional argument example number 2"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "posit3", "positional argument example number 3"),
