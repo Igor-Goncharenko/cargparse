@@ -5,6 +5,8 @@
 /* ./argparse_example pos1 -n 10 --bool pos2 -- pos3 */
 int main(int argc, char **argv) {
     int i;
+    bool b;
+    const char *s;
 
     CARGPARSE_INIT(argparse,
             "test [OPTION]... [FILE]..\ntest [FILE]...",
@@ -12,19 +14,40 @@ int main(int argc, char **argv) {
             "Epilog example.",
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_INT, 'n', "number", "number of something"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_BOOL, -1, "bool", "bool for something"),
+            CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_STRING, -1, "some-str", "some string"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "positional1", "positional argument example"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "pos2", "positional argument example number 2"),
             CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_POSITIONAL, -1, "posit3", "positional argument example number 3"),
-            );
+    );
 
     cargparse_print_help(&argparse);
 
     cargparse_parse(&argparse, argc, argv);
 
-    for (i = 0; i < argparse.n_options; i++) {
-        printf("%d) %c %s : %s %d\n", i + 1, argparse.options[i].short_name,
-               argparse.options[i].long_name, argparse.parse_res[i].valuestr,
-               argparse.parse_res[i].valuebool);
+
+
+    if (cargparse_get_bool_long(&argparse, "bool", &b) != -1) {
+        printf("Got bool value: %s\n", b ? "true" : "false");
+    } else {
+        printf("Did not find \"bool\"\n");
+    }
+
+    if (cargparse_get_str_long(&argparse, "some-str", &s, "default value") != -1) {
+        printf("Got string value: \"%s\"\n", s);
+    } else {
+        printf("Did not find \"some-str\"\n");
+    }
+
+    if (cargparse_get_int_short(&argparse, 'n', &i, 0) != -1) {
+        printf("Got int value: %d\n", i);
+    } else {
+        printf("Did not find 'n'\n");
+    }
+
+    if (cargparse_get_positional(&argparse, "posit3", &s, "pos1_default") != -1) {
+        printf("Got posit3 value: %s\n", s);
+    } else {
+        printf("Did not find \"posit3\"\n");
     }
 
     return 0;
