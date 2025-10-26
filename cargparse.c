@@ -1,15 +1,27 @@
 #include "cargparse.h"
 
 #include <stdio.h>
+#include <string.h>
 
 void cargparse_print_help(const cargparse_t *const self) {
     int i;
+    const char *ch_ptr_start, *ch_ptr_end;
 
     if (self->usages) {
-        const char *const *usages_ptr = self->usages;
-        printf("Usage: %s\n", *usages_ptr++);
-        while (*usages_ptr) {
-            printf("       %s\n", *usages_ptr++);
+        ch_ptr_start = self->usages;
+        ch_ptr_end = strchr(ch_ptr_start, '\n');
+        if (ch_ptr_end) {
+            printf("Usages: %.*s\n", (int)(ch_ptr_end - ch_ptr_start), ch_ptr_start);
+            ch_ptr_start = ch_ptr_end + 1;
+            while ((ch_ptr_end = strchr(ch_ptr_start, '\n'))) {
+                printf("        %.*s\n", (int)(ch_ptr_end - ch_ptr_start), ch_ptr_start);
+                ch_ptr_start = ch_ptr_end + 1;
+            }
+            if (*ch_ptr_start != '\0') {
+                printf("        %s\n", ch_ptr_start);
+            }
+        } else {
+            printf("Usages: %s\n", ch_ptr_start);
         }
         printf("\n");
     }

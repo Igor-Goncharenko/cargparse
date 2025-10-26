@@ -19,21 +19,30 @@ typedef struct {
 } cargparse_option_t;
 
 typedef struct {
-    const char *const *usages;
+    int valueint;
+    char *valuestr;
+} cargparse_parse_res_t;
+
+typedef struct {
+    const char *usages;
     const char *description;
     const char *epilog;
     const cargparse_option_t *options;
-    int n_options;
+    cargparse_parse_res_t *parse_res;
+    const int n_options;
 } cargparse_t;
 
-#define CARGPARSE_INIT(_usages, _description, _epilog, _options, _n_options) \
-    { \
+#define CARGPARSE_INIT(_name, _usages, _description, _epilog, ...) \
+    const cargparse_option_t _##_name##_options[] = { __VA_ARGS__ }; \
+    cargparse_parse_res_t _##_name##_parse_res[sizeof(_##_name##_options) / sizeof(cargparse_option_t)] = {0}; \
+    cargparse_t _name = { \
         _usages, \
         _description, \
         _epilog, \
-        _options, \
-        _n_options, \
-    }
+        _##_name##_options, \
+        _##_name##_parse_res, \
+        sizeof(_##_name##_options) / sizeof(cargparse_option_t) \
+    };
 
 #define CARGPARSE_OPTION_INIT(_type, _short_name, _long_name, _help) \
     { \
@@ -44,6 +53,8 @@ typedef struct {
     }
 
 void cargparse_print_help(const cargparse_t *const self);
+
+int cargparse_parse(const cargparse_t *const self, const int argc, char **argv);
 
 #ifdef __cplusplus
 }
