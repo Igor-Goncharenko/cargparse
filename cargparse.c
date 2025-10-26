@@ -52,7 +52,8 @@ void cargparse_print_help(const cargparse_t *const self) {
 static int _cargparse_search_long_option(const cargparse_t *const self, const char *long_name) {
     int i;
     for (i = 0; i < self->n_options; i++) {
-        if (self->options[i].long_name && strcmp(self->options[i].long_name, long_name) == 0)
+        if (self->options[i].type != CARGPARSE_OPTION_POSITIONAL && self->options[i].long_name &&
+            strcmp(self->options[i].long_name, long_name) == 0)
             return i;
     }
     return -1;
@@ -61,62 +62,86 @@ static int _cargparse_search_long_option(const cargparse_t *const self, const ch
 static int _cargparse_search_short_option(const cargparse_t *const self, const char short_name) {
     int i;
     for (i = 0; i < self->n_options; i++) {
-        if (self->options[i].short_name != -1 && self->options[i].short_name == short_name)
+        if (self->options[i].type != CARGPARSE_OPTION_POSITIONAL &&
+            self->options[i].short_name != -1 && self->options[i].short_name == short_name)
             return i;
     }
     return -1;
 }
 
+static int _cargparse_get_next_positional_opt(const cargparse_t *const self, const int prev_pos_i) {
+    int i;
+    for (i = prev_pos_i + 1; i < self->n_options; i++) {
+        if (self->options[i].type == CARGPARSE_OPTION_POSITIONAL) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static cargparse_arg_type_t _cargparse_get_arg_type(const char *arg) {
-    if (arg && arg[0] != '\0' && arg[1] != '\0') {
-        if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0') {
-            return CARGPARSE_ARG_DOUBLE_HYPHEN;
-        }
-        if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0' && arg[2] != '-') {
-            return CARGPARSE_ARG_LONG;
-        }
-        if (arg[0] == '-' && arg[1] != '\0' && arg[1] != '-') {
-            return CARGPARSE_ARG_SHORT;
-        }
-        if (arg[0] != '-') {
-            return CARGPARSE_ARG_POS;
-        }
+    if (!arg || arg[0] == '\0') {
+        return CARGPARSE_ARG_INCORRECT;
+    }
+
+    if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0') {
+        return CARGPARSE_ARG_DOUBLE_HYPHEN;
+    }
+    if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0' && arg[2] != '-') {
+        return CARGPARSE_ARG_LONG;
+    }
+    if (arg[0] == '-' && arg[1] != '\0' && arg[1] != '-') {
+        return CARGPARSE_ARG_SHORT;
+    }
+    if (arg[0] != '-') {
+        return CARGPARSE_ARG_POS;
     }
 
     return CARGPARSE_ARG_INCORRECT;
 }
 
 int cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
-    int i, opt_idx;
-    cargparse_arg_type_t arg_type[argc];
-
-    for (i = 1; i < argc; i++) {
-        arg_type[i] = _cargparse_get_arg_type(argv[i]);
-        /*printf("%s: type=%d\n", argv[i], arg_type[i]);*/
-    }
+    int i, opt_idx, last_pos_i;
+    bool after_double_hyphen;
+    cargparse_arg_type_t arg_type;
 
     opt_idx = -1;
+    last_pos_i = -1;
+    after_double_hyphen = false;
 
     for (i = 1; i < argc; i++) {
-        switch(arg_type[i]) {
+        arg_type = _cargparse_get_arg_type(argv[i]);
+
+        switch(arg_type) {
             case CARGPARSE_ARG_POS:
-                if (opt_idx != -1) {
+                if (opt_idx == -1) {    /* parse as positional argument */
+                    last_pos_i = _cargparse_get_next_positional_opt(self, last_pos_i);
+                    if (last_pos_i != -1) {
+                        self->parse_res[last_pos_i].valuestr = argv[i];
+                    } else {
+                        return -1;
+                    }
+                } else {                /* parse with short/long argument which was received earlier */
                     self->parse_res[opt_idx].valuestr = argv[i];
+                    opt_idx = -1;
                 }
                 break;
             case CARGPARSE_ARG_SHORT:
                 opt_idx = _cargparse_search_short_option(self, *(argv[i] + 1));
                 if (self->options[opt_idx].type == CARGPARSE_OPTION_BOOL) {
                     self->parse_res[opt_idx].valuebool = true;
+                    opt_idx = -1;       /* we dont need to parse next argv in bool */
                 }
                 break;
             case CARGPARSE_ARG_LONG:
                 opt_idx = _cargparse_search_long_option(self, argv[i] + 2);
                 if (self->options[opt_idx].type == CARGPARSE_OPTION_BOOL) {
                     self->parse_res[opt_idx].valuebool = true;
+                    opt_idx = -1;       /* we dont need to parse next argv in bool */
                 }
                 break;
             case CARGPARSE_ARG_DOUBLE_HYPHEN:
+                after_double_hyphen = true;
                 break;
             case CARGPARSE_ARG_INCORRECT:
                 break;

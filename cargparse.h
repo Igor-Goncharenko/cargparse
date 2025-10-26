@@ -8,7 +8,8 @@ extern "C" {
 #include <stdbool.h>
 
 typedef enum {
-    CARGPARSE_OPTION_BOOL = 0,
+    CARGPARSE_OPTION_POSITIONAL = 0,
+    CARGPARSE_OPTION_BOOL,
     CARGPARSE_OPTION_INT,
     CARGPARSE_OPTION_STRING,
 } cargparse_option_type_e;
