@@ -237,8 +237,8 @@ static int _cargparse_find_opt(const cargparse_t *const self, const char short_n
     return -1;
 }
 
-static int _cargparse_get_bool_value(const cargparse_t *const self, char short_name,
-                                     const char *long_name, bool *result) {
+static int _cargparse_get_check_opt(const cargparse_t *const self, const cargparse_option_type_e type,
+                                    const char short_name, const char *long_name) {
     int opt_idx;
     const char *opt_name;
 
@@ -249,11 +249,21 @@ static int _cargparse_get_bool_value(const cargparse_t *const self, char short_n
         fprintf(stderr, "Error: unknown option '%s'\n", opt_name);
         return -1;
     }
-    if (self->options[opt_idx].type != CARGPARSE_OPTION_BOOL) {
-        fprintf(stderr, "Error: incorrect type for option '%s'\n", opt_name);
+    if (self->options[opt_idx].type != type) {
+        fprintf(stderr, "Error: incorrect type for option '%s'. Got=%d, expected=%d\n",
+                opt_name, self->options[opt_idx].type, type);
         return -1;
     }
 
+    return opt_idx;
+}
+
+static int _cargparse_get_bool_value(const cargparse_t *const self, const char short_name,
+                                     const char *long_name, bool *result) {
+    int opt_idx;
+    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_BOOL, short_name, long_name)) == -1) {
+        return -1;
+    }
     if (!self->parse_res[opt_idx].is_got) {
         *result = false;
         return 1;
@@ -266,20 +276,9 @@ static int _cargparse_get_string_value(const cargparse_t *self, char short_name,
                                        const char *long_name, const char **result,
                                        const char *default_value) {
     int opt_idx;
-    const char *opt_name;
-
-    opt_idx = _cargparse_find_opt(self, short_name, long_name);
-    opt_name = long_name ? long_name : (short_name != -1 ? &short_name : "unknown");
-
-    if (opt_idx == -1) {
-        fprintf(stderr, "Error: unknown option '%s'\n", opt_name);
+    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_STRING, short_name, long_name)) == -1) {
         return -1;
     }
-    if (self->options[opt_idx].type != CARGPARSE_OPTION_STRING) {
-        fprintf(stderr, "Error: incorrect type for option '%s'\n", opt_name);
-        return -1;
-    }
-
     if (!self->parse_res[opt_idx].is_got) {
         *result = default_value;
         return default_value ? 1 : 0;
@@ -292,20 +291,9 @@ static int _cargparse_get_int_value(const cargparse_t *self, char short_name,
                                     const char *long_name, int *result,
                                     const int default_value) {
     int opt_idx;
-    const char *opt_name;
-
-    opt_idx = _cargparse_find_opt(self, short_name, long_name);
-    opt_name = long_name ? long_name : (short_name != -1 ? &short_name : "unknown");
-
-    if (opt_idx == -1) {
-        fprintf(stderr, "Error: unknown option '%s'\n", opt_name);
+    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_INT, short_name, long_name)) == -1) {
         return -1;
     }
-    if (self->options[opt_idx].type != CARGPARSE_OPTION_INT) {
-        fprintf(stderr, "Error: incorrect type for option '%s'\n", opt_name);
-        return -1;
-    }
-
     if (!self->parse_res[opt_idx].is_got) {
         *result = default_value;
         return default_value ? 1 : 0;
@@ -345,17 +333,9 @@ int cargparse_get_int_short(const cargparse_t *const self, const char short_name
 int cargparse_get_positional(const cargparse_t *const self, const char *long_name,
                              const char **valuestr, const char *default_value) {
     int opt_idx;
-
-    opt_idx = _cargparse_find_opt(self, -1, long_name);
-    if (opt_idx == -1) {
-        fprintf(stderr, "Error: unknown option '%s'\n", long_name);
+    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_POSITIONAL, -1, long_name)) == -1) {
         return -1;
     }
-    if (self->options[opt_idx].type != CARGPARSE_OPTION_POSITIONAL) {
-        fprintf(stderr, "Error: incorrect type for option '%s'\n", long_name);
-        return -1;
-    }
-
     if (!self->parse_res[opt_idx].is_got) {
         *valuestr = default_value;
         return default_value ? 1 : 0;
