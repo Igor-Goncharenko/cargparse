@@ -9,7 +9,7 @@ LIB = $(LIBNAME).a
 
 OBJ = cargparse.o
 
-.PHONY: all clean
+.PHONY: all clean test
 
 all: $(LIB)
 
@@ -21,4 +21,9 @@ $(LIB): $(OBJ)
 
 clean:
 	rm -rf $(OBJ) $(LIB)
+
+test:
+	@echo "Running tests..."
+	@cd test && $(MAKE) clean && $(MAKE) && ./cargparse_tests
+
 
