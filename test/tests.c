@@ -54,10 +54,30 @@ int init_test(void) {
     return 0;
 }
 
+int init_null_test(void) {
+    CARGPARSE_INIT(test_ap, NULL, NULL, NULL,
+            CARGPARSE_OPTION_INT(-1, NULL, NULL)
+    );
+
+    TEST_EQ(test_ap.usages, (const char*)NULL, "init_test usages");
+    TEST_EQ(test_ap.description, (const char*)NULL, "init_test description");
+    TEST_EQ(test_ap.epilog, (const char*)NULL, "init_test epilog");
+    TEST_EQ(test_ap.n_options, 1, "init_test n_options");
+
+    TEST_EQ(test_ap.options[0].type, (cargparse_option_type_e)CARGPARSE_OPTION_TYPE_INT,
+            "init_test option type mismatch");
+    TEST_EQ(test_ap.options[0].short_name, (char)-1, "init_test option short_name mismatch");
+    TEST_EQ(test_ap.options[0].long_name, (const char*)NULL, "init_test option long_name mismatch");
+    TEST_EQ(test_ap.options[0].help, (const char*)NULL, "init_test option help mismatch");
+
+    return 0;
+}
+
 int main(void) {
     printf("\nRunning tests...\n");
 
     RUN_TEST(init_test);
+    RUN_TEST(init_null_test);
 
     print_test_summary();
 

@@ -25,8 +25,22 @@
         TEST((_a_val) == (_b_val), (_msg)); \
     } while (0)
 
+#define TEST_IS_NULL(_a, _msg) \
+    TEST((_a) == NULL, (_msg))
+
+#define TEST_IS_NOT_NULL(_a, _msg) \
+    TEST((_a) != NULL, (_msg))
+
 #define TEST_EQ_STR(_a, _b, _msg) \
-    TEST(strcmp((_a), (_b)) == 0, (_msg))
+    do { \
+        if ((_a) != NULL && (_b) != NULL) { \
+            TEST(strcmp((_a), (_b)) == 0, (_msg)); \
+        } else { \
+            TEST_IS_NULL((_a), _msg); \
+            TEST_IS_NULL((_b), _msg); \
+        } \
+    } while (0)
+
 
 #define RUN_TEST(_test_func) \
     do { \
