@@ -11,6 +11,7 @@ typedef enum {
     CARGPARSE_OPTION_TYPE_POS = 0,
     CARGPARSE_OPTION_TYPE_BOOL,
     CARGPARSE_OPTION_TYPE_INT,
+    CARGPARSE_OPTION_TYPE_FLOAT,
     CARGPARSE_OPTION_TYPE_STR,
 } cargparse_option_type_e;
 
@@ -24,6 +25,7 @@ typedef struct {
 typedef struct {
     bool is_got;
     int valueint;
+    float valuefloat;
     const char *valuestr;
 } cargparse_parse_res_t;
 
@@ -59,6 +61,9 @@ typedef struct {
 #define CARGPARSE_OPTION_INT(_short_name, _long_name, _help) \
     CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_INT, _short_name, _long_name, _help)
 
+#define CARGPARSE_OPTION_FLOAT(_short_name, _long_name, _help) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_FLOAT, _short_name, _long_name, _help)
+
 #define CARGPARSE_OPTION_BOOL(_short_name, _long_name, _help) \
     CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_BOOL, _short_name, _long_name, _help)
 
@@ -88,6 +93,12 @@ int cargparse_get_int_long(const cargparse_t *const self, const char *long_name,
 
 int cargparse_get_int_short(const cargparse_t *const self, const char short_name, int *valueint,
                             const int default_value);
+
+int cargparse_get_float_long(const cargparse_t *const self, const char *long_name, float *valuefloat,
+                             const float default_value);
+
+int cargparse_get_float_short(const cargparse_t *const self, const char short_name, float *valuefloat,
+                              const float default_value);
 
 int cargparse_get_positional(const cargparse_t *const self, const char *long_name,
                              const char **valuestr, const char *default_value);

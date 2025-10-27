@@ -2,9 +2,10 @@
 
 #include <stdio.h>
 
-/* ./argparse_example pos1 -n 10 --bool pos2 -- pos3 */
+/* ./argparse_example pos1 -n 10 --bool pos2 --some-str SOme\ str --float 89.342 -- pos3 */
 int main(int argc, char **argv) {
     int i;
+    float f;
     bool b;
     const char *s;
 
@@ -15,6 +16,7 @@ int main(int argc, char **argv) {
             CARGPARSE_OPTION_INT('n', "number", "number of something"),
             CARGPARSE_OPTION_BOOL(-1, "bool", "bool for something"),
             CARGPARSE_OPTION_STRING(-1, "some-str", "some string"),
+            CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
             CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
             CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2"),
             CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3"),
@@ -23,8 +25,6 @@ int main(int argc, char **argv) {
     cargparse_print_help(&argparse);
 
     cargparse_parse(&argparse, argc, argv);
-
-
 
     if (cargparse_get_bool_long(&argparse, "bool", &b) != -1) {
         printf("Got bool value: %s\n", b ? "true" : "false");
@@ -42,6 +42,12 @@ int main(int argc, char **argv) {
         printf("Got int value: %d\n", i);
     } else {
         printf("Did not find 'n'\n");
+    }
+
+    if (cargparse_get_float_short(&argparse, 'f', &f, 0.0) != -1) {
+        printf("Got float value: %f\n", f);
+    } else {
+        printf("Did not find 'f'\n");
     }
 
     if (cargparse_get_positional(&argparse, "posit3", &s, "pos1_default") != -1) {

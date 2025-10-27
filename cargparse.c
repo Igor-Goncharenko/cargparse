@@ -13,9 +13,9 @@ typedef enum {
 } cargparse_arg_type_t;
 
 static void _cargparse_print_option(const cargparse_option_t *opt) {
-    const char *OPT_TYPE_STR[] = { "POS", "BOOL", "INT", "STR" };
+    const char *OPT_TYPE_STR[] = { "POS", "BOOL", "INT", "FLOAT", "STR" };
 
-    printf("  %4s  ", OPT_TYPE_STR[opt->type]);
+    printf("  %5s  ", OPT_TYPE_STR[opt->type]);
 
     if (opt->type == CARGPARSE_OPTION_TYPE_POS || opt->short_name == -1) {
         printf("    ");
@@ -137,6 +137,25 @@ static int _cargparse_parse_int(const char *str, int *result) {
     return 0;
 }
 
+static int _cargparse_parse_float(const char *str, float *result) {
+    char *endptr;
+    double val;
+
+    val = strtod(str, &endptr);
+
+    if (endptr == str) {
+        fprintf(stderr, "Error: not a valid number '%s'\n", str);
+        return -1;
+    }
+    if (*endptr != '\0') {
+        fprintf(stderr, "Error: extra characters after number '%s'\n", str);
+        return -1;
+    }
+
+    *result = (float)val;
+    return 0;
+}
+
 static int _cargparse_set_parse_res(const cargparse_option_type_e type, const char *arg_str,
                                     cargparse_parse_res_t *parse_res) {
     switch (type) {
@@ -148,6 +167,11 @@ static int _cargparse_set_parse_res(const cargparse_option_type_e type, const ch
             break;
         case CARGPARSE_OPTION_TYPE_INT:
             if (_cargparse_parse_int(arg_str, &parse_res->valueint) == -1) {
+                return -1;
+            }
+            break;
+        case CARGPARSE_OPTION_TYPE_FLOAT:
+            if (_cargparse_parse_float(arg_str, &parse_res->valuefloat) == -1) {
                 return -1;
             }
             break;
@@ -302,6 +326,21 @@ static int _cargparse_get_int_value(const cargparse_t *self, char short_name,
     return 0;
 }
 
+static int _cargparse_get_float_value(const cargparse_t *self, char short_name,
+                                      const char *long_name, float *result,
+                                      const float default_value) {
+    int opt_idx;
+    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_FLOAT, short_name, long_name)) == -1) {
+        return -1;
+    }
+    if (!self->parse_res[opt_idx].is_got) {
+        *result = default_value;
+        return default_value ? 1 : 0;
+    }
+    *result = self->parse_res[opt_idx].valuefloat;
+    return 0;
+}
+
 int cargparse_get_bool_long(const cargparse_t *const self, const char *long_name, bool *valuebool) {
     return _cargparse_get_bool_value(self, -1, long_name, valuebool);
 }
@@ -328,6 +367,16 @@ int cargparse_get_int_long(const cargparse_t *const self, const char *long_name,
 int cargparse_get_int_short(const cargparse_t *const self, const char short_name, int *valueint,
                             const int default_value) {
     return _cargparse_get_int_value(self, short_name, NULL, valueint, default_value);
+}
+
+int cargparse_get_float_long(const cargparse_t *const self, const char *long_name, float *valuefloat,
+                             const float default_value) {
+    return _cargparse_get_float_value(self, -1, long_name, valuefloat, default_value);
+}
+
+int cargparse_get_float_short(const cargparse_t *const self, const char short_name, float *valuefloat,
+                              const float default_value) {
+    return _cargparse_get_float_value(self, short_name, NULL, valuefloat, default_value);
 }
 
 int cargparse_get_positional(const cargparse_t *const self, const char *long_name,
