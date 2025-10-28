@@ -12,7 +12,7 @@
 #define TEST(_cond, _msg) \
     do { \
         if (!(_cond)) { \
-            printf("FAIL: %s\n", (_msg)); \
+            printf("FAIL(%s:%s:%d): %s\n", __FILE__, __func__, __LINE__, (_msg)); \
             return 1; \
         } \
     } while (0)
