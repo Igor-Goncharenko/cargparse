@@ -14,17 +14,21 @@ CARGPARSE_INIT(test_argparse,
     CARGPARSE_OPTION_STRING(-1, "some-str", "some string"),
     CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
     CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
+    CARGPARSE_OPTION_POSITIONAL("positional2", "positional argument example"),
+    CARGPARSE_OPTION_POSITIONAL("positional3", "positional argument example"),
 );
 
 int test_argparse_init_test(void) {
     int i;
     /* and init by hand */
-    const cargparse_option_t hand_init_opts[5] = {
+    const cargparse_option_t hand_init_opts[7] = {
         { CARGPARSE_OPTION_TYPE_INT, 'n', "number", "number of something" },
         { CARGPARSE_OPTION_TYPE_BOOL, -1, "bool", "bool for something" },
         { CARGPARSE_OPTION_TYPE_STR, -1, "some-str", "some string" },
         { CARGPARSE_OPTION_TYPE_FLOAT, 'f', "float", "some float" },
         { CARGPARSE_OPTION_TYPE_POS, -1, "positional1", "positional argument example" },
+        { CARGPARSE_OPTION_TYPE_POS, -1, "positional2", "positional argument example" },
+        { CARGPARSE_OPTION_TYPE_POS, -1, "positional3", "positional argument example" },
     };
     cargparse_parse_res_t hand_init_parse_res[5] = { 0 };
     const cargparse_t hand_init_test_argparse = {
@@ -33,7 +37,7 @@ int test_argparse_init_test(void) {
         "Epilog example.",
         hand_init_opts,
         hand_init_parse_res,
-        5
+        7
     };
 
     /* compare macro init and hand init */
@@ -91,7 +95,8 @@ int option_init_test(void) {
 int test_argparse_all_opts(void) {
     int i;
     char *argv[] = {
-        "program", "-n", "10", "--bool", "--some-str", "Some str", "--float", "8.89", "--", "pos1"
+        "program", "-n", "10", "--bool", "--some-str", "Some str", "--float", "8.89", "--",
+        "pos1", "pos2", "pos3"
     };
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char*), argv);
 
@@ -101,6 +106,8 @@ int test_argparse_all_opts(void) {
         { true, 0, 0.0, "Some str" },
         { true, 0, 8.89, NULL },
         { true, 0, 0.0, "pos1" },
+        { true, 0, 0.0, "pos2" },
+        { true, 0, 0.0, "pos3" },
     };
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
@@ -116,6 +123,8 @@ int test_argparse_no_opts(void) {
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char*), argv);
 
     const cargparse_parse_res_t parse_res[] = {
+        { false, 0, 0.0, NULL },
+        { false, 0, 0.0, NULL },
         { false, 0, 0.0, NULL },
         { false, 0, 0.0, NULL },
         { false, 0, 0.0, NULL },
@@ -145,6 +154,8 @@ int test_argparse_short_name_errors(void) {
     TEST_PARSE_ERROR(&test_argparse, -1, "-n", "ffdsaf");
     /* other option after int option */
     TEST_PARSE_ERROR(&test_argparse, -1, "-n", "--float", "89.99");
+    /* duplicating options */
+    TEST_PARSE_ERROR(&test_argparse, -1, "-n", "10", "-n", "9");
 
     return 0;
 }
@@ -164,6 +175,25 @@ int test_argparse_long_name_errors(void) {
     TEST_PARSE_ERROR(&test_argparse, -1, "--float", "ffdsaf");
     /* other option after int option */
     TEST_PARSE_ERROR(&test_argparse, -1, "--float", "--float", "89.99");
+    /* duplicating options */
+    TEST_PARSE_ERROR(&test_argparse, -1, "--float", "10.10", "--float", "99.09");
+
+    return 0;
+}
+
+int test_argparse_positional(void) {
+    TEST_PARSE_ERROR(&test_argparse, 0, "pos1");
+    TEST_PARSE_ERROR(&test_argparse, 0, "pos1", "pos2");
+    TEST_PARSE_ERROR(&test_argparse, 0, "pos1", "pos2", "pos3");
+    TEST_PARSE_ERROR(&test_argparse, -1, "pos1", "pos2", "pos3", "pos4");
+    TEST_PARSE_ERROR(&test_argparse, 0, "--", "pos1");
+    TEST_PARSE_ERROR(&test_argparse, 0, "pos1", "--", "pos2");
+    TEST_PARSE_ERROR(&test_argparse, 0, "pos1", "--", "pos2", "pos3");
+    TEST_PARSE_ERROR(&test_argparse, 0, "--", "pos1", "pos2", "pos3");
+    TEST_PARSE_ERROR(&test_argparse, 0);
+
+    TEST_PARSE_ERROR(&test_argparse, 0, "pos1", "--float", "89.09", "pos2", "--", "pos3");
+    TEST_PARSE_ERROR(&test_argparse, 0, "-n", "10", "pos1", "--float", "89.09", "pos2", "pos3");
 
     return 0;
 }
@@ -178,6 +208,7 @@ int main(void) {
     RUN_TEST(test_argparse_no_opts);
     RUN_TEST(test_argparse_short_name_errors);
     RUN_TEST(test_argparse_long_name_errors);
+    RUN_TEST(test_argparse_positional);
 
     print_test_summary();
 

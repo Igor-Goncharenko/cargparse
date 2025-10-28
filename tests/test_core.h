@@ -67,8 +67,8 @@
         char *_argv[] = { "program", __VA_ARGS__ }; \
         int _argc = sizeof(_argv) / sizeof(char*); \
         int _result = cargparse_parse((_ap), _argc, _argv); \
-        TEST(_result == (_expected_result)); \
         CARGPARSE_PARSE_RES_CLEANUP((_ap)); \
+        TEST(_result == (_expected_result)); \
     } while (0)
 
 extern int total_tests;
