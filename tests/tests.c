@@ -16,40 +16,6 @@ CARGPARSE_INIT(test_argparse,
     CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
 );
 
-static int cmp_options(const cargparse_option_t *opt1, const cargparse_option_t *opt2) {
-    if (opt1->type != opt2->type)
-        return 0;
-    if (opt1->short_name != opt2->short_name)
-        return 0;
-    if (opt1->long_name && opt2->long_name && strcmp(opt1->long_name, opt2->long_name) != 0)
-        return 0;
-    if ((opt1->long_name && !opt2->long_name) || (!opt1->long_name && opt2->long_name))
-        return 0;
-    if (opt1->help && opt2->help && strcmp(opt1->help, opt2->help) != 0)
-        return 0;
-    if ((opt1->help && !opt2->help) || (!opt1->help && opt2->help))
-        return 0;
-    return 1;
-}
-
-static int cmp_parse_res(const cargparse_parse_res_t *pr1, const cargparse_parse_res_t *pr2) {
-    if (pr1->is_got != pr2->is_got)
-        return 0;
-    if (pr1->valueint != pr2->valueint)
-        return 0;
-    if (pr1->valuefloat != pr2->valuefloat)
-        return 0;
-    if (pr1->valuestr && pr2->valuestr && strcmp(pr1->valuestr, pr2->valuestr) != 0)
-        return 0;
-    if ((pr1->valuestr && !pr2->valuestr) || (!pr1->valuestr && pr2->valuestr))
-        return 0;
-    return 1;
-}
-
-static void argparse_t_cleanup_parse_res(cargparse_t *self) {
-    memset(self->parse_res, 0, sizeof(cargparse_parse_res_t) * self->n_options);
-}
-
 int test_argparse_init_test(void) {
     int i;
     /* and init by hand */
@@ -139,7 +105,7 @@ int test_argparse_all_opts(void) {
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
     }
-    argparse_t_cleanup_parse_res(&test_argparse);
+    CARGPARSE_PARSE_RES_CLEANUP(&test_argparse);
 
     return 0;
 }
@@ -159,7 +125,7 @@ int test_argparse_no_opts(void) {
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
     }
-    argparse_t_cleanup_parse_res(&test_argparse);
+    CARGPARSE_PARSE_RES_CLEANUP(&test_argparse);
 
     return 0;
 }
@@ -168,40 +134,17 @@ int test_argparse_short_name_errors(void) {
     /* TODO: Replace -1 if cargparse_err_t type will be created */
 
     /* only non-existent options */
-    char *argv1[] = { "program", "-a" };
-    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv1) / sizeof(char*), argv1), -1);
-    argparse_t_cleanup_parse_res(&test_argparse);
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "-a");
     /* non-existent options */
-    char *argv2[] = { "program", "-a", " 12341" };
-    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv2) / sizeof(char*), argv2), -1);
-    argparse_t_cleanup_parse_res(&test_argparse);
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "-a", " 12341");
     /* non-existent options after positional */
-    char *argv3[] = { "program", "12341", "-a" };
-    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv3) / sizeof(char*), argv3), -1);
-    argparse_t_cleanup_parse_res(&test_argparse);
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "12341", "-a");
     /* nothing after int option */
-    /* FIXME: thit test failed
-     * char *argv4[] = { "program", "-n" };
-     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv4) / sizeof(char*), argv4), -1);
-     * argparse_t_cleanup_parse_res(&test_argparse);
-     */
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "-n");
     /* not number after int option */
-    /* FIXME: this test failed
-     * char *argv5[] = { "program", "-n", "ffdsaf" };
-     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv5) / sizeof(char*), argv5), -1);
-     * argparse_t_cleanup_parse_res(&test_argparse);
-     */
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "-n", "ffdsaf");
     /* other option after int option */
-    /* FIXME: this test failed
-     * char *argv6[] = { "program", "-n", "--float", "89.99" };
-     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv6) / sizeof(char*), argv6), -1);
-     * argparse_t_cleanup_parse_res(&test_argparse);
-     */
+    TEST_PARSE_ERROR(&test_argparse, -1, "-n", "--float", "89.99");
 
     return 0;
 }
@@ -209,41 +152,18 @@ int test_argparse_short_name_errors(void) {
 int test_argparse_long_name_errors(void) {
     /* TODO: Replace -1 if cargparse_err_t type will be created */
 
-    /* only non-existent option */
-    char *argv1[] = { "program", "--non-existent" };
-    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv1) / sizeof(char*), argv1), -1);
-    argparse_t_cleanup_parse_res(&test_argparse);
-
-    /* non-existent option after positional */
-    char *argv2[] = { "program", "positional1", "--non-existent" };
-    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv2) / sizeof(char*), argv2), -1);
-    argparse_t_cleanup_parse_res(&test_argparse);
-
-    /* non-existent option */
-    char *argv3[] = { "program", "--non-existent", "value1" };
-    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv3) / sizeof(char*), argv3), -1);
-    argparse_t_cleanup_parse_res(&test_argparse);
-
+    /* only non-existent options */
+    TEST_PARSE_ERROR(&test_argparse, -1, "--non-existent");
+    /* non-existent options */
+    TEST_PARSE_ERROR(&test_argparse, -1, "--non-existent", "value1");
+    /* non-existent options after positional */
+    TEST_PARSE_ERROR(&test_argparse, -1, "positional1", "--non-existent" );
     /* nothing after int option */
-    /* FIXME: thit test failed
-     * char *argv4[] = { "program", "--float" };
-     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv4) / sizeof(char*), argv4), -1);
-     * argparse_t_cleanup_parse_res(&test_argparse);
-     */
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "--float");
     /* not number after int option */
-    /* FIXME: this test failed
-     * char *argv5[] = { "program", "--float", "ffdsaf" };
-     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv5) / sizeof(char*), argv5), -1);
-     * argparse_t_cleanup_parse_res(&test_argparse);
-     */
-
+    TEST_PARSE_ERROR(&test_argparse, -1, "--float", "ffdsaf");
     /* other option after int option */
-    /* FIXME: this test failed
-     * char *argv6[] = { "program", "--float", "--float", "89.99" };
-     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv6) / sizeof(char*), argv6), -1);
-     * argparse_t_cleanup_parse_res(&test_argparse);
-     */
+    TEST_PARSE_ERROR(&test_argparse, -1, "--float", "--float", "89.99");
 
     return 0;
 }

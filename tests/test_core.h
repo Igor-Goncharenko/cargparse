@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "../cargparse.h"
+
 #define STATIC_ASSERT(_cond, _msg) \
     typedef char _static_assert##_msg[(_cond) ? 1 : -1] __attribute__((unused))
 
@@ -54,10 +56,29 @@
         } \
     } while (0)
 
+#define CARGPARSE_PARSE_RES_CLEANUP(_ap) \
+    do { \
+        STATIC_ASSERT(SAME_TYPE((_ap), cargparse_t*), cargparse_type); \
+        memset((_ap)->parse_res, 0, sizeof(cargparse_parse_res_t) * (_ap)->n_options); \
+    } while (0)
+
+#define TEST_PARSE_ERROR(_ap, _expected_result, ...) \
+    do { \
+        char *_argv[] = { "program", __VA_ARGS__ }; \
+        int _argc = sizeof(_argv) / sizeof(char*); \
+        int _result = cargparse_parse((_ap), _argc, _argv); \
+        TEST(_result == (_expected_result)); \
+        CARGPARSE_PARSE_RES_CLEANUP((_ap)); \
+    } while (0)
+
 extern int total_tests;
 extern int passed_tests;
 extern int failed_tests;
 
 void print_test_summary(void);
+
+int cmp_options(const cargparse_option_t *opt1, const cargparse_option_t *opt2);
+
+int cmp_parse_res(const cargparse_parse_res_t *pr1, const cargparse_parse_res_t *pr2);
 
 #endif /* TEST_CORE_H */
