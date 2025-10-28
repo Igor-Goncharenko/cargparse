@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 typedef enum {
     CARGPARSE_ARG_INCORRECT = -1,
@@ -108,14 +109,13 @@ static cargparse_arg_type_t _cargparse_get_arg_type(const char *arg) {
     if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0' && arg[2] != '-') {
         return CARGPARSE_ARG_LONG;
     }
-    if (arg[0] == '-' && arg[1] != '\0' && arg[1] != '-') {
-        return CARGPARSE_ARG_SHORT;
-    }
-    if (arg[0] != '-') {
+    if (arg[0] == '-' && (arg[1] == '\0' || isdigit(arg[1]))) {
         return CARGPARSE_ARG_POS;
     }
-
-    return CARGPARSE_ARG_INCORRECT;
+    if (arg[0] == '-') {
+        return CARGPARSE_ARG_SHORT;
+    }
+    return CARGPARSE_ARG_POS;
 }
 
 static int _cargparse_parse_int(const char *str, int *result) {
