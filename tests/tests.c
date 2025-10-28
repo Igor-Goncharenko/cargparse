@@ -3,6 +3,17 @@
 #include "test_core.h"
 #include "../cargparse.h"
 
+CARGPARSE_INIT(test_argparse,
+    "test [OPTION]... [FILE]..\ntest [FILE]...",
+    "Description example.",
+    "Epilog example.",
+    CARGPARSE_OPTION_INT('n', "number", "number of something"),
+    CARGPARSE_OPTION_BOOL(-1, "bool", "bool for something"),
+    CARGPARSE_OPTION_STRING(-1, "some-str", "some string"),
+    CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
+    CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
+);
+
 static int cmp_options(const cargparse_option_t *opt1, const cargparse_option_t *opt2) {
     if (opt1->type != opt2->type)
         return 0;
@@ -19,22 +30,24 @@ static int cmp_options(const cargparse_option_t *opt1, const cargparse_option_t 
     return 1;
 }
 
-int init_test(void) {
-    int i;
+static int cmp_parse_res(const cargparse_parse_res_t *pr1, const cargparse_parse_res_t *pr2) {
+    if (pr1->is_got != pr2->is_got)
+        return 0;
+    if (pr1->valueint != pr2->valueint)
+        return 0;
+    if (pr1->valuefloat != pr2->valuefloat)
+        return 0;
+    if (pr1->valuestr && pr2->valuestr && strcmp(pr1->valuestr, pr2->valuestr) != 0)
+        return 0;
+    if ((pr1->valuestr && !pr2->valuestr) || (!pr1->valuestr && pr2->valuestr))
+        return 0;
+    return 1;
+}
 
-    /* init with library macro */
-    CARGPARSE_INIT(lib_init_ap,
-            "test [OPTION]... [FILE]..\ntest [FILE]...",
-            "Description example.",
-            "Epilog example.",
-            CARGPARSE_OPTION_INT('n', "number", "number of something"),
-            CARGPARSE_OPTION_BOOL(-1, "bool", "bool for something"),
-            CARGPARSE_OPTION_STRING(-1, "some-str", "some string"),
-            CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
-            CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
-    );
+int test_argparse_init_test(void) {
+    int i;
     /* and init by hand */
-    cargparse_option_t hand_init_opts[5] = {
+    const cargparse_option_t hand_init_opts[5] = {
         { CARGPARSE_OPTION_TYPE_INT, 'n', "number", "number of something" },
         { CARGPARSE_OPTION_TYPE_BOOL, -1, "bool", "bool for something" },
         { CARGPARSE_OPTION_TYPE_STR, -1, "some-str", "some string" },
@@ -42,7 +55,7 @@ int init_test(void) {
         {CARGPARSE_OPTION_TYPE_POS, -1, "positional1", "positional argument example" },
     };
     cargparse_parse_res_t hand_init_parse_res[5] = { 0 };
-    cargparse_t hand_init_ap = {
+    const cargparse_t hand_init_test_argparse = {
         "test [OPTION]... [FILE]..\ntest [FILE]...",
         "Description example.",
         "Epilog example.",
@@ -52,12 +65,12 @@ int init_test(void) {
     };
 
     /* compare macro init and hand init */
-    TEST_EQ_STR(lib_init_ap.usages, hand_init_ap.usages, "init_test usages");
-    TEST_EQ_STR(lib_init_ap.description, hand_init_ap.description, "init_test description");
-    TEST_EQ_STR(lib_init_ap.epilog, hand_init_ap.epilog, "init_test epilog");
-    TEST_EQ(lib_init_ap.n_options, hand_init_ap.n_options, "init_test n_options");
-    for (i = 0; i < lib_init_ap.n_options; i++) {
-        TEST(cmp_options(&lib_init_ap.options[i], &hand_init_ap.options[i]),
+    TEST_EQ_STR(test_argparse.usages, hand_init_test_argparse.usages, "init_test usages");
+    TEST_EQ_STR(test_argparse.description, hand_init_test_argparse.description, "init_test description");
+    TEST_EQ_STR(test_argparse.epilog, hand_init_test_argparse.epilog, "init_test epilog");
+    TEST_EQ(test_argparse.n_options, hand_init_test_argparse.n_options, "init_test n_options");
+    for (i = 0; i < test_argparse.n_options; i++) {
+        TEST(cmp_options(&test_argparse.options[i], &hand_init_test_argparse.options[i]),
              "init_test cmp_options failed");
     }
 
@@ -107,7 +120,7 @@ int option_init_test(void) {
 int main(void) {
     printf("\nRunning tests...\n");
 
-    RUN_TEST(init_test);
+    RUN_TEST(test_argparse_init_test);
     RUN_TEST(init_null_test);
     RUN_TEST(option_init_test);
 
