@@ -170,31 +170,37 @@ int test_argparse_short_name_errors(void) {
     /* only non-existent options */
     char *argv1[] = { "program", "-a" };
     TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv1) / sizeof(char*), argv1), -1);
+    argparse_t_cleanup_parse_res(&test_argparse);
 
     /* non-existent options */
     char *argv2[] = { "program", "-a", " 12341" };
     TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv2) / sizeof(char*), argv2), -1);
+    argparse_t_cleanup_parse_res(&test_argparse);
 
     /* non-existent options after positional */
     char *argv3[] = { "program", "12341", "-a" };
     TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv3) / sizeof(char*), argv3), -1);
+    argparse_t_cleanup_parse_res(&test_argparse);
 
     /* nothing after int option */
     /* FIXME: thit test failed
      * char *argv4[] = { "program", "-n" };
      * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv4) / sizeof(char*), argv4), -1);
+     * argparse_t_cleanup_parse_res(&test_argparse);
      */
 
     /* not number after int option */
     /* FIXME: this test failed
      * char *argv5[] = { "program", "-n", "ffdsaf" };
      * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv5) / sizeof(char*), argv5), -1);
+     * argparse_t_cleanup_parse_res(&test_argparse);
      */
 
     /* other option after int option */
     /* FIXME: this test failed
      * char *argv6[] = { "program", "-n", "--float", "89.99" };
      * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv6) / sizeof(char*), argv6), -1);
+     * argparse_t_cleanup_parse_res(&test_argparse);
      */
 
     return 0;
@@ -206,31 +212,37 @@ int test_argparse_long_name_errors(void) {
     /* only non-existent option */
     char *argv1[] = { "program", "--non-existent" };
     TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv1) / sizeof(char*), argv1), -1);
+    argparse_t_cleanup_parse_res(&test_argparse);
 
     /* non-existent option after positional */
     char *argv2[] = { "program", "positional1", "--non-existent" };
     TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv2) / sizeof(char*), argv2), -1);
+    argparse_t_cleanup_parse_res(&test_argparse);
 
     /* non-existent option */
     char *argv3[] = { "program", "--non-existent", "value1" };
     TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv3) / sizeof(char*), argv3), -1);
+    argparse_t_cleanup_parse_res(&test_argparse);
 
     /* nothing after int option */
     /* FIXME: thit test failed
      * char *argv4[] = { "program", "--float" };
      * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv4) / sizeof(char*), argv4), -1);
+     * argparse_t_cleanup_parse_res(&test_argparse);
      */
 
     /* not number after int option */
     /* FIXME: this test failed
      * char *argv5[] = { "program", "--float", "ffdsaf" };
      * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv5) / sizeof(char*), argv5), -1);
+     * argparse_t_cleanup_parse_res(&test_argparse);
      */
 
     /* other option after int option */
     /* FIXME: this test failed
      * char *argv6[] = { "program", "--float", "--float", "89.99" };
      * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv6) / sizeof(char*), argv6), -1);
+     * argparse_t_cleanup_parse_res(&test_argparse);
      */
 
     return 0;
