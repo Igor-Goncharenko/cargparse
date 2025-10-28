@@ -1,4 +1,6 @@
+#include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "test_core.h"
 #include "../cargparse.h"
@@ -42,6 +44,10 @@ static int cmp_parse_res(const cargparse_parse_res_t *pr1, const cargparse_parse
     if ((pr1->valuestr && !pr2->valuestr) || (!pr1->valuestr && pr2->valuestr))
         return 0;
     return 1;
+}
+
+static void argparse_t_cleanup_parse_res(cargparse_t *self) {
+    memset(self->parse_res, 0, sizeof(cargparse_parse_res_t) * self->n_options);
 }
 
 int test_argparse_init_test(void) {
@@ -117,12 +123,36 @@ int option_init_test(void) {
     return 0;
 }
 
+int test_argparse_all_opts(void) {
+    int i;
+    char *argv[] = {
+        "program", "-n", "10", "--bool", "--some-str", "Some str", "--float", "8.89", "--", "pos1"
+    };
+    cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char*), argv);
+
+    const cargparse_parse_res_t parse_res[] = {
+        { true, 10, 0.0, NULL },
+        { true, 0, 0.0, NULL },
+        { true, 0, 0.0, "Some str" },
+        { true, 0, 8.89, NULL },
+        { true, 0, 0.0, "pos1" },
+    };
+    for (i = 0; i < test_argparse.n_options; i++) {
+        TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]),
+             "test_argparse_init_test cmp_parse_res");
+    }
+    argparse_t_cleanup_parse_res(&test_argparse);
+
+    return 0;
+}
+
 int main(void) {
     printf("\nRunning tests...\n");
 
     RUN_TEST(test_argparse_init_test);
     RUN_TEST(init_null_test);
     RUN_TEST(option_init_test);
+    RUN_TEST(test_argparse_all_opts);
 
     print_test_summary();
 
