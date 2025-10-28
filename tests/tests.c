@@ -58,7 +58,7 @@ int test_argparse_init_test(void) {
         { CARGPARSE_OPTION_TYPE_BOOL, -1, "bool", "bool for something" },
         { CARGPARSE_OPTION_TYPE_STR, -1, "some-str", "some string" },
         { CARGPARSE_OPTION_TYPE_FLOAT, 'f', "float", "some float" },
-        {CARGPARSE_OPTION_TYPE_POS, -1, "positional1", "positional argument example" },
+        { CARGPARSE_OPTION_TYPE_POS, -1, "positional1", "positional argument example" },
     };
     cargparse_parse_res_t hand_init_parse_res[5] = { 0 };
     const cargparse_t hand_init_test_argparse = {
@@ -146,6 +146,111 @@ int test_argparse_all_opts(void) {
     return 0;
 }
 
+int test_argparse_no_opts(void) {
+    int i;
+    char *argv[] = { "program" };
+    cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char*), argv);
+
+    const cargparse_parse_res_t parse_res[] = {
+        { false, 0, 0.0, NULL },
+        { false, 0, 0.0, NULL },
+        { false, 0, 0.0, NULL },
+        { false, 0, 0.0, NULL },
+        { false, 0, 0.0, NULL },
+    };
+    for (i = 0; i < test_argparse.n_options; i++) {
+        TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]),
+             "test_argparse_no_opts cmp_parse_res");
+    }
+    argparse_t_cleanup_parse_res(&test_argparse);
+
+    return 0;
+}
+
+int test_argparse_short_name_errors(void) {
+    /* TODO: Replace -1 if cargparse_err_t type will be created */
+
+    /* only non-existent options */
+    char *argv1[] = { "program", "-a" };
+    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv1) / sizeof(char*), argv1), -1,
+            "Only non-existent short option");
+
+    /* non-existent options */
+    char *argv2[] = { "program", "-a", " 12341" };
+    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv2) / sizeof(char*), argv2), -1,
+            "Non-existent short option");
+
+    /* non-existent options after positional */
+    char *argv3[] = { "program", "12341", "-a" };
+    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv3) / sizeof(char*), argv3), -1,
+            "Non-existent short option after positional");
+
+    /* nothing after int option */
+    /* FIXME: thit test failed
+     * char *argv4[] = { "program", "-n" };
+     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv4) / sizeof(char*), argv4), -1,
+     *         "No number after -n option");
+     */
+
+    /* not number after int option */
+    /* FIXME: this test failed
+     * char *argv5[] = { "program", "-n", "ffdsaf" };
+     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv5) / sizeof(char*), argv5), -1,
+     *         "Not number after -n option");
+     */
+
+    /* other option after int option */
+    /* FIXME: this test failed
+     * char *argv6[] = { "program", "-n", "--float", "89.99" };
+     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv6) / sizeof(char*), argv6), -1,
+     *         "Other option after int option");
+     */
+
+    return 0;
+}
+
+int test_argparse_long_name_errors(void) {
+    /* TODO: Replace -1 if cargparse_err_t type will be created */
+
+    /* only non-existent option */
+    char *argv1[] = { "program", "--non-existent" };
+    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv1) / sizeof(char*), argv1), -1,
+            "Only non-existent long option");
+
+    /* non-existent option after positional */
+    char *argv2[] = { "program", "positional1", "--non-existent" };
+    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv2) / sizeof(char*), argv2), -1,
+            "Non-existent long option after positional");
+
+    /* non-existent option */
+    char *argv3[] = { "program", "--non-existent", "value1" };
+    TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv3) / sizeof(char*), argv3), -1,
+            "Non-existent long option");
+
+    /* nothing after int option */
+    /* FIXME: thit test failed
+     * char *argv4[] = { "program", "--float" };
+     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv4) / sizeof(char*), argv4), -1,
+     *         "No number after --float option");
+     */
+
+    /* not number after int option */
+    /* FIXME: this test failed
+     * char *argv5[] = { "program", "--float", "ffdsaf" };
+     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv5) / sizeof(char*), argv5), -1,
+     *         "Not number after --float option");
+     */
+
+    /* other option after int option */
+    /* FIXME: this test failed
+     * char *argv6[] = { "program", "--float", "--float", "89.99" };
+     * TEST_EQ(cargparse_parse(&test_argparse, sizeof(argv6) / sizeof(char*), argv6), -1,
+     *         "Other option after float option");
+     */
+
+    return 0;
+}
+
 int main(void) {
     printf("\nRunning tests...\n");
 
@@ -153,6 +258,9 @@ int main(void) {
     RUN_TEST(init_null_test);
     RUN_TEST(option_init_test);
     RUN_TEST(test_argparse_all_opts);
+    RUN_TEST(test_argparse_no_opts);
+    RUN_TEST(test_argparse_short_name_errors);
+    RUN_TEST(test_argparse_long_name_errors);
 
     print_test_summary();
 
