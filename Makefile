@@ -24,6 +24,6 @@ clean:
 
 test:
 	@echo "Running tests..."
-	@cd test && $(MAKE) clean && $(MAKE) && ./cargparse_tests
+	@cd tests && $(MAKE) clean && $(MAKE) && ./cargparse_tests
 
 
