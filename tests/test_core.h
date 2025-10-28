@@ -9,35 +9,35 @@
 
 #define SAME_TYPE(a, b) __builtin_types_compatible_p(__typeof__(a), __typeof__(b))
 
-#define TEST(_cond, _msg) \
+#define TEST(_cond) \
     do { \
         if (!(_cond)) { \
-            printf("FAIL(%s:%s:%d): %s\n", __FILE__, __func__, __LINE__, (_msg)); \
+            printf("FAIL: %s:%s:%d\n", __FILE__, __func__, __LINE__); \
             return 1; \
         } \
     } while (0)
 
-#define TEST_EQ(_a, _b, _msg) \
+#define TEST_EQ(_a, _b) \
     do { \
         STATIC_ASSERT(SAME_TYPE((_a), (_b)), different_types); \
         __typeof__(_a) _a_val = (_a); \
         __typeof__(_b) _b_val = (_b); \
-        TEST((_a_val) == (_b_val), (_msg)); \
+        TEST((_a_val) == (_b_val)); \
     } while (0)
 
-#define TEST_IS_NULL(_a, _msg) \
-    TEST((_a) == NULL, (_msg))
+#define TEST_IS_NULL(_a) \
+    TEST((_a) == NULL)
 
-#define TEST_IS_NOT_NULL(_a, _msg) \
-    TEST((_a) != NULL, (_msg))
+#define TEST_IS_NOT_NULL(_a) \
+    TEST((_a) != NULL)
 
-#define TEST_EQ_STR(_a, _b, _msg) \
+#define TEST_EQ_STR(_a, _b) \
     do { \
         if ((_a) != NULL && (_b) != NULL) { \
-            TEST(strcmp((_a), (_b)) == 0, (_msg)); \
+            TEST(strcmp((_a), (_b)) == 0); \
         } else { \
-            TEST_IS_NULL((_a), _msg); \
-            TEST_IS_NULL((_b), _msg); \
+            TEST_IS_NULL((_a)); \
+            TEST_IS_NULL((_b)); \
         } \
     } while (0)
 
