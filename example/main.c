@@ -9,6 +9,7 @@ main(int argc, char **argv) {
     float f;
     bool b;
     const char *s;
+    cargparse_err_e ret;
 
     /* clang-format off */
     CARGPARSE_INIT(argparse,
@@ -16,8 +17,8 @@ main(int argc, char **argv) {
             "Description example.",
             "Epilog example.",
             CARGPARSE_OPTION_INT('n', "number", "number of something"),
-            CARGPARSE_OPTION_BOOL(-1, "bool", "bool for something"),
-            CARGPARSE_OPTION_STRING(-1, "some-str", "some string"),
+            CARGPARSE_OPTION_BOOL(CARGPARSE_NO_SHORT, "bool", "bool for something"),
+            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string"),
             CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
             CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
             CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2"),
@@ -27,48 +28,48 @@ main(int argc, char **argv) {
 
     cargparse_print_help(&argparse);
 
-    if (cargparse_parse(&argparse, argc, argv) == -1) {
-        fprintf(stderr, "Failed to parse options\n");
+    if ((ret = cargparse_parse(&argparse, argc, argv)) != CARGPARSE_OK) {
+        fprintf(stderr, "Failed to parse options: %d\n", ret);
         return 1;
     }
 
-    if (cargparse_get_bool_long(&argparse, "bool", &b) != -1) {
+    if (cargparse_get_bool_long(&argparse, "bool", &b) == CARGPARSE_OK) {
         printf("Got bool value: %s\n", b ? "true" : "false");
     } else {
         printf("Did not find \"bool\"\n");
     }
 
-    if (cargparse_get_str_long(&argparse, "some-str", &s, "default value") != -1) {
+    if (cargparse_get_str_long(&argparse, "some-str", &s, "default value") == CARGPARSE_OK) {
         printf("Got string value: \"%s\"\n", s);
     } else {
         printf("Did not find \"some-str\"\n");
     }
 
-    if (cargparse_get_int_short(&argparse, 'n', &i, 0) != -1) {
+    if (cargparse_get_int_short(&argparse, 'n', &i, 0) == CARGPARSE_OK) {
         printf("Got int value: %d\n", i);
     } else {
         printf("Did not find 'n'\n");
     }
 
-    if (cargparse_get_float_short(&argparse, 'f', &f, 0.0) != -1) {
+    if (cargparse_get_float_short(&argparse, 'f', &f, 0.0) == CARGPARSE_OK) {
         printf("Got float value: %f\n", f);
     } else {
         printf("Did not find 'f'\n");
     }
 
-    if (cargparse_get_positional(&argparse, "positional1", &s, "pos1_default") != -1) {
+    if (cargparse_get_positional(&argparse, "positional1", &s, "pos1_default") == CARGPARSE_OK) {
         printf("Got posit1 value: %s\n", s);
     } else {
         printf("Did not find \"posit1\"\n");
     }
 
-    if (cargparse_get_positional(&argparse, "pos2", &s, "pos2_default") != -1) {
+    if (cargparse_get_positional(&argparse, "pos2", &s, "pos2_default") == CARGPARSE_OK) {
         printf("Got posit2 value: %s\n", s);
     } else {
         printf("Did not find \"posit2\"\n");
     }
 
-    if (cargparse_get_positional(&argparse, "posit3", &s, "pos3_default") != -1) {
+    if (cargparse_get_positional(&argparse, "posit3", &s, "pos3_default") == CARGPARSE_OK) {
         printf("Got posit3 value: %s\n", s);
     } else {
         printf("Did not find \"posit3\"\n");
