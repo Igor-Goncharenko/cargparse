@@ -53,7 +53,19 @@ int main(int argc, char **argv) {
         printf("Did not find 'f'\n");
     }
 
-    if (cargparse_get_positional(&argparse, "posit3", &s, "pos1_default") != -1) {
+    if (cargparse_get_positional(&argparse, "positional1", &s, "pos1_default") != -1) {
+        printf("Got posit1 value: %s\n", s);
+    } else {
+        printf("Did not find \"posit1\"\n");
+    }
+
+    if (cargparse_get_positional(&argparse, "pos2", &s, "pos2_default") != -1) {
+        printf("Got posit2 value: %s\n", s);
+    } else {
+        printf("Did not find \"posit2\"\n");
+    }
+
+    if (cargparse_get_positional(&argparse, "posit3", &s, "pos3_default") != -1) {
         printf("Got posit3 value: %s\n", s);
     } else {
         printf("Did not find \"posit3\"\n");
