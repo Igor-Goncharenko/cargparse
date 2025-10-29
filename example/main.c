@@ -1,14 +1,16 @@
-#include "cargparse.h"
-
 #include <stdio.h>
 
+#include "cargparse.h"
+
 /* ./argparse_example pos1 -n 10 --bool pos2 --some-str SOme\ str --float 89.342 -- pos3 */
-int main(int argc, char **argv) {
+int
+main(int argc, char **argv) {
     int i;
     float f;
     bool b;
     const char *s;
 
+    /* clang-format off */
     CARGPARSE_INIT(argparse,
             "test [OPTION]... [FILE]..\ntest [FILE]...",
             "Description example.",
@@ -21,6 +23,7 @@ int main(int argc, char **argv) {
             CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2"),
             CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3"),
     );
+    /* clang-format on */
 
     cargparse_print_help(&argparse);
 
