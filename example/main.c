@@ -24,7 +24,10 @@ int main(int argc, char **argv) {
 
     cargparse_print_help(&argparse);
 
-    cargparse_parse(&argparse, argc, argv);
+    if (cargparse_parse(&argparse, argc, argv) == -1) {
+        fprintf(stderr, "Failed to parse options\n");
+        return 1;
+    }
 
     if (cargparse_get_bool_long(&argparse, "bool", &b) != -1) {
         printf("Got bool value: %s\n", b ? "true" : "false");

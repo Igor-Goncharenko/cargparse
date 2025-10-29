@@ -158,6 +158,7 @@ static int _cargparse_parse_float(const char *str, float *result) {
 
 static int _cargparse_set_parse_res(const cargparse_option_type_e type, const char *arg_str,
                                     cargparse_parse_res_t *parse_res) {
+    int ret = 0;
     switch (type) {
         case CARGPARSE_OPTION_TYPE_STR:
         case CARGPARSE_OPTION_TYPE_POS:
@@ -166,18 +167,14 @@ static int _cargparse_set_parse_res(const cargparse_option_type_e type, const ch
         case CARGPARSE_OPTION_TYPE_BOOL:
             break;
         case CARGPARSE_OPTION_TYPE_INT:
-            if (_cargparse_parse_int(arg_str, &parse_res->valueint) == -1) {
-                return -1;
-            }
+            ret = _cargparse_parse_int(arg_str, &parse_res->valueint);
             break;
         case CARGPARSE_OPTION_TYPE_FLOAT:
-            if (_cargparse_parse_float(arg_str, &parse_res->valuefloat) == -1) {
-                return -1;
-            }
+            ret = _cargparse_parse_float(arg_str, &parse_res->valuefloat);
             break;
     }
-    parse_res->is_got = true;
-    return 0;
+    parse_res->is_got = (ret == 0) ? true : false;
+    return ret;
 }
 
 int cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
@@ -211,40 +208,69 @@ int cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
                         fprintf(stderr, "Error: Unexpected positional argument '%s'\n", arg);
                         return -1;
                     }
+                } else if (self->parse_res[opt_idx].is_got) {
+                    fprintf(stderr, "Error: option already got\n");
+                    return -1;
                 } else { /* parse with short/long argument which was received earlier */
-                    _cargparse_set_parse_res(self->options[opt_idx].type, arg, &self->parse_res[opt_idx]);
+                    if (_cargparse_set_parse_res(self->options[opt_idx].type, arg,
+                        &self->parse_res[opt_idx]) == -1) {
+                        return -1;
+                    }
                     opt_idx = -1;
                 }
                 break;
             case CARGPARSE_ARG_SHORT:
+                if (opt_idx != -1) {
+                    fprintf(stderr, "Error: got another option when previous is not set\n");
+                    return -1;
+                }
                 opt_idx = _cargparse_search_short_option(self, *(arg + 1));
                 if (opt_idx == -1) {
                     fprintf(stderr, "Error: unknown option '-%c'\n", *(arg + 1));
                     return -1;
                 }
                 if (self->options[opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
-                    _cargparse_set_parse_res(self->options[opt_idx].type, arg, &self->parse_res[opt_idx]);
+                    if (_cargparse_set_parse_res(self->options[opt_idx].type, arg,
+                        &self->parse_res[opt_idx]) == -1) {
+                        return -1;
+                    }
                     opt_idx = -1; /* we dont need to parse next argv in bool */
                 }
                 break;
             case CARGPARSE_ARG_LONG:
+                if (opt_idx != -1) {
+                    fprintf(stderr, "Error: got another option when previous is not set\n");
+                    return -1;
+                }
                 opt_idx = _cargparse_search_long_option(self, arg + 2);
                 if (opt_idx == -1) {
                     fprintf(stderr, "Error: unknown option '--%s'\n", arg);
                     return -1;
                 }
                 if (self->options[opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
-                    _cargparse_set_parse_res(self->options[opt_idx].type, arg, &self->parse_res[opt_idx]);
+                    if (_cargparse_set_parse_res(self->options[opt_idx].type, arg,
+                        &self->parse_res[opt_idx]) == -1) {
+                        return -1;
+                    }
                     opt_idx = -1; /* we dont need to parse next argv in bool */
                 }
                 break;
             case CARGPARSE_ARG_DOUBLE_HYPHEN:
+                if (opt_idx != -1) {
+                    fprintf(stderr, "Error: got '--' when previous option is not set\n");
+                    return -1;
+                }
                 after_double_hyphen = true;
                 opt_idx = -1;
                 break;
             case CARGPARSE_ARG_INCORRECT:
                 break;
         }
+    }
+
+    if (opt_idx != -1) {
+        fprintf(stderr, "Error: for last option got but not set\n");
+        return -1;
     }
 
     return 0;
@@ -263,11 +289,8 @@ static int _cargparse_find_opt(const cargparse_t *const self, const char short_n
 
 static int _cargparse_get_check_opt(const cargparse_t *const self, const cargparse_option_type_e type,
                                     const char short_name, const char *long_name) {
-    int opt_idx;
-    const char *opt_name;
-
-    opt_idx = _cargparse_find_opt(self, short_name, long_name);
-    opt_name = long_name ? long_name : (short_name != -1 ? &short_name : "unknown");
+    int opt_idx = _cargparse_find_opt(self, short_name, long_name);
+    const char *opt_name = long_name ? long_name : (short_name != -1 ? &short_name : "unknown");
 
     if (opt_idx == -1) {
         fprintf(stderr, "Error: unknown option '%s'\n", opt_name);
@@ -284,8 +307,8 @@ static int _cargparse_get_check_opt(const cargparse_t *const self, const cargpar
 
 static int _cargparse_get_bool_value(const cargparse_t *const self, const char short_name,
                                      const char *long_name, bool *result) {
-    int opt_idx;
-    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_BOOL, short_name, long_name)) == -1) {
+    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_BOOL, short_name, long_name);
+    if (opt_idx == -1) {
         return -1;
     }
     if (!self->parse_res[opt_idx].is_got) {
@@ -299,8 +322,8 @@ static int _cargparse_get_bool_value(const cargparse_t *const self, const char s
 static int _cargparse_get_string_value(const cargparse_t *self, char short_name,
                                        const char *long_name, const char **result,
                                        const char *default_value) {
-    int opt_idx;
-    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_STR, short_name, long_name)) == -1) {
+    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_STR, short_name, long_name);
+    if (opt_idx == -1) {
         return -1;
     }
     if (!self->parse_res[opt_idx].is_got) {
@@ -314,8 +337,8 @@ static int _cargparse_get_string_value(const cargparse_t *self, char short_name,
 static int _cargparse_get_int_value(const cargparse_t *self, char short_name,
                                     const char *long_name, int *result,
                                     const int default_value) {
-    int opt_idx;
-    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_INT, short_name, long_name)) == -1) {
+    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_INT, short_name, long_name);
+    if (opt_idx == -1) {
         return -1;
     }
     if (!self->parse_res[opt_idx].is_got) {
@@ -329,8 +352,8 @@ static int _cargparse_get_int_value(const cargparse_t *self, char short_name,
 static int _cargparse_get_float_value(const cargparse_t *self, char short_name,
                                       const char *long_name, float *result,
                                       const float default_value) {
-    int opt_idx;
-    if ((opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_FLOAT, short_name, long_name)) == -1) {
+    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_FLOAT, short_name, long_name);
+    if (opt_idx == -1) {
         return -1;
     }
     if (!self->parse_res[opt_idx].is_got) {
