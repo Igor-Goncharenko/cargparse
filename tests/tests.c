@@ -379,6 +379,27 @@ test_argparse_getters_defaults(void) {
 }
 
 int
+test_required_args(void) {
+    /* clang-format off */
+    CARGPARSE_INIT(test_req, NULL, NULL, NULL,
+        CARGPARSE_OPTION_INT('n', "number", "number of something", CARGPARSE_FLAG_REQUIRED),
+        CARGPARSE_OPTION_INT('d', "d number", "d number of something", CARGPARSE_FLAG_NONE),
+        CARGPARSE_OPTION_POSITIONAL("pos1", "first positional argument", CARGPARSE_FLAG_REQUIRED),
+    );
+    /* clang-format on */
+
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_GOT_ZERO_ARGS);
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS, "-n", "10");
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS, "-n", "10", "-d", "99");
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS, "-d", "10", "pos1 value");
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS, "pos1 value");
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_OK, "-n", "10", "pos1 value");
+    TEST_PARSE_ERROR(&test_req, CARGPARSE_OK, "-n", "10", "pos1 value", "-d", "99");
+
+    return 0;
+}
+
+int
 main(void) {
     printf("\nRunning tests...\n");
 
@@ -393,6 +414,7 @@ main(void) {
     RUN_TEST(test_argparse_getters);
     RUN_TEST(test_argparse_getters_unknown);
     RUN_TEST(test_argparse_getters_defaults);
+    RUN_TEST(test_required_args);
 
     print_test_summary();
 
