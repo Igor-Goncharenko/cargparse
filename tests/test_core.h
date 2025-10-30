@@ -58,13 +58,26 @@
         memset((_ap)->parse_res, 0, sizeof(cargparse_parse_res_t) * (_ap)->n_options); \
     } while (0)
 
-#define TEST_PARSE_ERROR(_ap, _expected_result, ...)        \
-    do {                                                    \
-        char *_argv[] = {"program", __VA_ARGS__};           \
-        int _argc = sizeof(_argv) / sizeof(char *);         \
-        int _result = cargparse_parse((_ap), _argc, _argv); \
-        CARGPARSE_PARSE_RES_CLEANUP((_ap));                 \
-        TEST(_result == (_expected_result));                \
+#define TEST_PARSE_ERROR(_ap, _expected_result, ...)                          \
+    do {                                                                      \
+        char *_argv[] = {"program", __VA_ARGS__};                             \
+        const int _argc = sizeof(_argv) / sizeof(char *);                     \
+        const cargparse_err_e _result = cargparse_parse((_ap), _argc, _argv); \
+        CARGPARSE_PARSE_RES_CLEANUP((_ap));                                   \
+        TEST_EQ(_result, (cargparse_err_e)(_expected_result));                \
+    } while (0)
+
+#define TEST_PARSE_RES(_ap, _parse_res, ...)                                  \
+    do {                                                                      \
+        int i;                                                                \
+        char *_argv[] = {"program", __VA_ARGS__};                             \
+        const int _argc = sizeof(_argv) / sizeof(char *);                     \
+        const cargparse_err_e _result = cargparse_parse((_ap), _argc, _argv); \
+        TEST_EQ(_result, (cargparse_err_e)CARGPARSE_OK);                      \
+        for (i = 0; i < (_ap)->n_options; i++) {                              \
+            TEST(cmp_parse_res(&_parse_res[i], &(_ap)->parse_res[i]));        \
+        }                                                                     \
+        CARGPARSE_PARSE_RES_CLEANUP((_ap));                                   \
     } while (0)
 
 extern int total_tests;

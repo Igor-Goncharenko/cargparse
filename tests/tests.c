@@ -173,18 +173,46 @@ test_argparse_long_name_errors(void) {
 
 int
 test_argparse_positional(void) {
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "pos1");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "pos1", "pos2");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "pos1", "pos2", "pos3");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNEXPECTED_POSITIONAL, "pos1", "pos2", "pos3", "pos4");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "--", "pos1");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "pos1", "--", "pos2");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "pos1", "--", "pos2", "pos3");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "--", "pos1", "pos2", "pos3");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK);
+    const cargparse_parse_res_t parse_res0[] = {
+        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+    };
+    const cargparse_parse_res_t parse_res1[] = {
+        {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {true, 0, 0.0, "pos1"}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+    };
+    const cargparse_parse_res_t parse_res2[] = {
+        {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {false, 0, 0.0, NULL},
+    };
+    const cargparse_parse_res_t parse_res3[] = {
+        {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},
+        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+    };
+    const cargparse_parse_res_t parse_res4[] = {
+        {false, 0, 0.0, NULL},  {true, 0, 0.0, NULL},   {false, 0, 0.0, NULL},  {true, 0, -89.09, NULL},
+        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+    };
+    const cargparse_parse_res_t parse_res5[] = {
+        {true, 10, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {true, 0, 89.09, NULL},
+        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+    };
 
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "pos1", "--float", "89.09", "pos2", "--", "pos3");
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_OK, "-n", "10", "pos1", "--float", "89.09", "pos2", "pos3");
+    TEST_PARSE_RES(&test_argparse, parse_res1, "pos1");
+
+    TEST_PARSE_RES(&test_argparse, parse_res1, "pos1");
+    TEST_PARSE_RES(&test_argparse, parse_res2, "pos1", "pos2");
+    TEST_PARSE_RES(&test_argparse, parse_res3, "pos1", "pos2", "pos3");
+    TEST_PARSE_RES(&test_argparse, parse_res1, "--", "pos1");
+    TEST_PARSE_RES(&test_argparse, parse_res2, "pos1", "--", "pos2");
+    TEST_PARSE_RES(&test_argparse, parse_res3, "pos1", "--", "pos2", "pos3");
+    TEST_PARSE_RES(&test_argparse, parse_res3, "--", "pos1", "pos2", "pos3");
+    TEST_PARSE_RES(&test_argparse, parse_res0);
+
+    TEST_PARSE_RES(&test_argparse, parse_res4, "pos1", "--float", "-89.09", "pos2", "--bool", "--", "pos3");
+    TEST_PARSE_RES(&test_argparse, parse_res5, "-n", "10", "pos1", "--float", "89.09", "pos2", "pos3");
+
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNEXPECTED_POSITIONAL, "pos1", "pos2", "pos3", "pos4");
 
     return 0;
 }
