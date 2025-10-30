@@ -218,6 +218,164 @@ test_argparse_positional(void) {
 }
 
 int
+test_argparse_getters(void) {
+    bool b;
+    int d;
+    float f;
+    const char *s;
+
+    int i;
+    char *argv[] = {"program", "-n",   "10", "--bool", "--some-str", "Some str",
+                    "--float", "8.89", "--", "pos1",   "pos2",       "pos3"};
+    cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
+
+    const cargparse_parse_res_t parse_res[] = {
+        {true, 10, 0.0, NULL},  {true, 0, 0.0, NULL},   {true, 0, 0.0, "Some str"}, {true, 0, 8.89, NULL},
+        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+    };
+    for (i = 0; i < test_argparse.n_options; i++) {
+        TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
+    }
+
+    TEST_EQ(cargparse_get_bool_long(&test_argparse, "bool", &b), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(b, (bool)true);
+
+    TEST_EQ(cargparse_get_str_long(&test_argparse, "some-str", &s, NULL), (cargparse_err_e)CARGPARSE_OK);
+    TEST(strcmp(s, "Some str") == 0);
+
+    TEST_EQ(cargparse_get_float_short(&test_argparse, 'f', &f, 0.0), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(f, (float)8.89);
+
+    TEST_EQ(cargparse_get_float_long(&test_argparse, "float", &f, 0.0), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(f, (float)8.89);
+
+    TEST_EQ(cargparse_get_int_short(&test_argparse, 'n', &d, 0), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(d, (int)10);
+
+    TEST_EQ(cargparse_get_int_long(&test_argparse, "number", &d, 0), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(d, (int)10);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional1", &s, NULL), (cargparse_err_e)CARGPARSE_OK);
+    TEST(strcmp(s, "pos1") == 0);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional2", &s, NULL), (cargparse_err_e)CARGPARSE_OK);
+    TEST(strcmp(s, "pos2") == 0);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional3", &s, NULL), (cargparse_err_e)CARGPARSE_OK);
+    TEST(strcmp(s, "pos3") == 0);
+
+    CARGPARSE_PARSE_RES_CLEANUP(&test_argparse);
+    return 0;
+}
+
+int
+test_argparse_getters_unknown(void) {
+    bool b;
+    int d;
+    float f;
+    const char *s;
+
+    int i;
+    char *argv[] = {"program"};
+    cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
+
+    const cargparse_parse_res_t parse_res[] = {
+        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+    };
+    for (i = 0; i < test_argparse.n_options; i++) {
+        TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
+    }
+
+    TEST_EQ(cargparse_get_bool_long(&test_argparse, "bool-unk", &b),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_str_long(&test_argparse, "some-str-unk", &s, "default str"),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_float_short(&test_argparse, 'p', &f, -999.9),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_float_long(&test_argparse, "float-ukn", &f, -1111.1),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_int_short(&test_argparse, 'a', &d, 1234),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_int_long(&test_argparse, "number-unk", &d, -4321),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional1-ukn", &s, "pos1_default"),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional2-ukn", &s, "pos2_default"),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional3-ukn", &s, "pos3_default"),
+            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+
+    CARGPARSE_PARSE_RES_CLEANUP(&test_argparse);
+    return 0;
+}
+
+int
+test_argparse_getters_defaults(void) {
+    bool b;
+    int d;
+    float f;
+    const char *s;
+
+    int i;
+    char *argv[] = {"program"};
+    cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
+
+    const cargparse_parse_res_t parse_res[] = {
+        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+    };
+    for (i = 0; i < test_argparse.n_options; i++) {
+        TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
+    }
+
+    TEST_EQ(cargparse_get_bool_long(&test_argparse, "bool", &b), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(b, (bool)false);
+
+    TEST_EQ(cargparse_get_str_long(&test_argparse, "some-str", &s, "default str"),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST(strcmp(s, "default str") == 0);
+
+    TEST_EQ(cargparse_get_float_short(&test_argparse, 'f', &f, -999.9),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST_EQ(f, (float)-999.9);
+
+    TEST_EQ(cargparse_get_float_long(&test_argparse, "float", &f, -1111.1),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST_EQ(f, (float)-1111.1);
+
+    TEST_EQ(cargparse_get_int_short(&test_argparse, 'n', &d, 1234), (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST_EQ(d, (int)1234);
+
+    TEST_EQ(cargparse_get_int_long(&test_argparse, "number", &d, -4321),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST_EQ(d, (int)-4321);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional1", &s, "pos1_default"),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST(strcmp(s, "pos1_default") == 0);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional2", &s, "pos2_default"),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST(strcmp(s, "pos2_default") == 0);
+
+    TEST_EQ(cargparse_get_positional(&test_argparse, "positional3", &s, "pos3_default"),
+            (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
+    TEST(strcmp(s, "pos3_default") == 0);
+
+    CARGPARSE_PARSE_RES_CLEANUP(&test_argparse);
+    return 0;
+}
+
+int
 main(void) {
     printf("\nRunning tests...\n");
 
@@ -229,6 +387,9 @@ main(void) {
     RUN_TEST(test_argparse_short_name_errors);
     RUN_TEST(test_argparse_long_name_errors);
     RUN_TEST(test_argparse_positional);
+    RUN_TEST(test_argparse_getters);
+    RUN_TEST(test_argparse_getters_unknown);
+    RUN_TEST(test_argparse_getters_defaults);
 
     print_test_summary();
 
