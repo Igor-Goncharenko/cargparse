@@ -26,6 +26,7 @@ cmp_options(const cargparse_option_t *opt1, const cargparse_option_t *opt2) {
     if ((opt1->long_name && !opt2->long_name) || (!opt1->long_name && opt2->long_name)) return 0;
     if (opt1->help && opt2->help && strcmp(opt1->help, opt2->help) != 0) return 0;
     if ((opt1->help && !opt2->help) || (!opt1->help && opt2->help)) return 0;
+    if (opt1->flags != opt2->flags) return 0;
     return 1;
 }
 

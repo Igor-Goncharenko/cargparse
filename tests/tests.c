@@ -10,13 +10,13 @@ CARGPARSE_INIT(test_argparse,
     "test [OPTION]... [FILE]..\ntest [FILE]...",
     "Description example.",
     "Epilog example.",
-    CARGPARSE_OPTION_INT('n', "number", "number of something"),
-    CARGPARSE_OPTION_BOOL(CARGPARSE_NO_SHORT, "bool", "bool for something"),
-    CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string"),
-    CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
-    CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
-    CARGPARSE_OPTION_POSITIONAL("positional2", "positional argument example"),
-    CARGPARSE_OPTION_POSITIONAL("positional3", "positional argument example"),
+    CARGPARSE_OPTION_INT('n', "number", "number of something", CARGPARSE_FLAG_NONE),
+    CARGPARSE_OPTION_BOOL(CARGPARSE_NO_SHORT, "bool", "bool for something", CARGPARSE_FLAG_NONE),
+    CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE),
+    CARGPARSE_OPTION_FLOAT('f', "float", "some float", CARGPARSE_FLAG_NONE),
+    CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example", CARGPARSE_FLAG_NONE),
+    CARGPARSE_OPTION_POSITIONAL("positional2", "positional argument example", CARGPARSE_FLAG_NONE),
+    CARGPARSE_OPTION_POSITIONAL("positional3", "positional argument example", CARGPARSE_FLAG_NONE),
 );
 /* clang-format on */
 
@@ -25,13 +25,16 @@ test_argparse_init_test(void) {
     int i;
     /* and init by hand */
     const cargparse_option_t hand_init_opts[7] = {
-        {CARGPARSE_OPTION_TYPE_INT, 'n', "number", "number of something"},
-        {CARGPARSE_OPTION_TYPE_BOOL, CARGPARSE_NO_SHORT, "bool", "bool for something"},
-        {CARGPARSE_OPTION_TYPE_STR, CARGPARSE_NO_SHORT, "some-str", "some string"},
-        {CARGPARSE_OPTION_TYPE_FLOAT, 'f', "float", "some float"},
-        {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional1", "positional argument example"},
-        {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional2", "positional argument example"},
-        {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional3", "positional argument example"},
+        {CARGPARSE_OPTION_TYPE_INT, 'n', "number", "number of something", CARGPARSE_FLAG_NONE},
+        {CARGPARSE_OPTION_TYPE_BOOL, CARGPARSE_NO_SHORT, "bool", "bool for something", CARGPARSE_FLAG_NONE},
+        {CARGPARSE_OPTION_TYPE_STR, CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE},
+        {CARGPARSE_OPTION_TYPE_FLOAT, 'f', "float", "some float", CARGPARSE_FLAG_NONE},
+        {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional1", "positional argument example",
+         CARGPARSE_FLAG_NONE},
+        {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional2", "positional argument example",
+         CARGPARSE_FLAG_NONE},
+        {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional3", "positional argument example",
+         CARGPARSE_FLAG_NONE},
     };
     cargparse_parse_res_t hand_init_parse_res[5] = {0};
     const cargparse_t hand_init_test_argparse = {"test [OPTION]... [FILE]..\ntest [FILE]...",
@@ -55,14 +58,14 @@ test_argparse_init_test(void) {
 
 int
 init_null_test(void) {
-    CARGPARSE_INIT(test_ap, NULL, NULL, NULL, CARGPARSE_OPTION_INT(-1, NULL, NULL));
+    CARGPARSE_INIT(test_ap, NULL, NULL, NULL, CARGPARSE_OPTION_INT(-1, NULL, NULL, CARGPARSE_FLAG_NONE));
 
     TEST_EQ(test_ap.usages, (const char *)NULL);
     TEST_EQ(test_ap.description, (const char *)NULL);
     TEST_EQ(test_ap.epilog, (const char *)NULL);
     TEST_EQ(test_ap.n_options, 1);
 
-    cargparse_option_t opt = {CARGPARSE_OPTION_TYPE_INT, -1, NULL, NULL};
+    cargparse_option_t opt = {CARGPARSE_OPTION_TYPE_INT, -1, NULL, NULL, CARGPARSE_FLAG_NONE};
     TEST(cmp_options(&test_ap.options[0], &opt));
 
     return 0;
@@ -70,25 +73,29 @@ init_null_test(void) {
 
 int
 option_init_test(void) {
-    const cargparse_option_t o1m = CARGPARSE_OPTION_BOOL('b', "bool", "some bool");
-    const cargparse_option_t o1h = {CARGPARSE_OPTION_TYPE_BOOL, 'b', "bool", "some bool"};
+    const cargparse_option_t o1m = CARGPARSE_OPTION_BOOL('b', "bool", "some bool", CARGPARSE_FLAG_NONE);
+    const cargparse_option_t o1h = {CARGPARSE_OPTION_TYPE_BOOL, 'b', "bool", "some bool",
+                                    CARGPARSE_FLAG_NONE};
     TEST(cmp_options(&o1m, &o1h));
 
-    const cargparse_option_t o2m = CARGPARSE_OPTION_INT('i', "int", "some int");
-    const cargparse_option_t o2h = {CARGPARSE_OPTION_TYPE_INT, 'i', "int", "some int"};
+    const cargparse_option_t o2m = CARGPARSE_OPTION_INT('i', "int", "some int", CARGPARSE_FLAG_NONE);
+    const cargparse_option_t o2h = {CARGPARSE_OPTION_TYPE_INT, 'i', "int", "some int", CARGPARSE_FLAG_NONE};
     TEST(cmp_options(&o2m, &o2h));
 
-    const cargparse_option_t o3m = CARGPARSE_OPTION_FLOAT('f', "float", "some float");
-    const cargparse_option_t o3h = {CARGPARSE_OPTION_TYPE_FLOAT, 'f', "float", "some float"};
+    const cargparse_option_t o3m = CARGPARSE_OPTION_FLOAT('f', "float", "some float", CARGPARSE_FLAG_NONE);
+    const cargparse_option_t o3h = {CARGPARSE_OPTION_TYPE_FLOAT, 'f', "float", "some float",
+                                    CARGPARSE_FLAG_NONE};
     TEST(cmp_options(&o3m, &o3h));
 
-    const cargparse_option_t o4m = CARGPARSE_OPTION_STRING('s', "string", "some string");
-    const cargparse_option_t o4h = {CARGPARSE_OPTION_TYPE_STR, 's', "string", "some string"};
+    const cargparse_option_t o4m = CARGPARSE_OPTION_STRING('s', "string", "some string", CARGPARSE_FLAG_NONE);
+    const cargparse_option_t o4h = {CARGPARSE_OPTION_TYPE_STR, 's', "string", "some string",
+                                    CARGPARSE_FLAG_NONE};
     TEST(cmp_options(&o4m, &o4h));
 
-    const cargparse_option_t o5m = CARGPARSE_OPTION_POSITIONAL("positional", "some positional");
+    const cargparse_option_t o5m =
+        CARGPARSE_OPTION_POSITIONAL("positional", "some positional", CARGPARSE_FLAG_NONE);
     const cargparse_option_t o5h = {CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, "positional",
-                                    "some positional"};
+                                    "some positional", CARGPARSE_FLAG_NONE};
     TEST(cmp_options(&o5m, &o5h));
 
     return 0;
@@ -173,10 +180,6 @@ test_argparse_long_name_errors(void) {
 
 int
 test_argparse_positional(void) {
-    const cargparse_parse_res_t parse_res0[] = {
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-    };
     const cargparse_parse_res_t parse_res1[] = {
         {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
         {true, 0, 0.0, "pos1"}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
@@ -207,11 +210,11 @@ test_argparse_positional(void) {
     TEST_PARSE_RES(&test_argparse, parse_res2, "pos1", "--", "pos2");
     TEST_PARSE_RES(&test_argparse, parse_res3, "pos1", "--", "pos2", "pos3");
     TEST_PARSE_RES(&test_argparse, parse_res3, "--", "pos1", "pos2", "pos3");
-    TEST_PARSE_RES(&test_argparse, parse_res0);
 
     TEST_PARSE_RES(&test_argparse, parse_res4, "pos1", "--float", "-89.09", "pos2", "--bool", "--", "pos3");
     TEST_PARSE_RES(&test_argparse, parse_res5, "-n", "10", "pos1", "--float", "89.09", "pos2", "pos3");
 
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_GOT_ZERO_ARGS);
     TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNEXPECTED_POSITIONAL, "pos1", "pos2", "pos3", "pos4");
 
     return 0;
