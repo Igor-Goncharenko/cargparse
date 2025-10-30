@@ -198,7 +198,7 @@ _cargparse_set_parse_res(const cargparse_option_type_e type, const char *arg_str
 }
 
 static cargparse_err_e
-_cargparse_handle_bool_option(cargparse_t *const self, int opt_idx, int *opt_idx_ptr) {
+_cargparse_handle_bool_option(cargparse_t *const self, const int opt_idx, int *opt_idx_ptr) {
     cargparse_err_e ret = CARGPARSE_OK;
     if (self->options[opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
         *opt_idx_ptr = -1;
@@ -244,6 +244,31 @@ _cargparse_handle_long_option(cargparse_t *const self, const char *arg, int *opt
         return CARGPARSE_ERR_UNKNOWN_OPTION;
     }
     return _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
+}
+
+static cargparse_err_e
+_cargparse_handle_mult_short_bool_options(cargparse_t *const self, const char *arg, int *opt_idx) {
+    cargparse_err_e ret;
+    int local_opt_idx, i;
+    *opt_idx = -1;
+
+    for (i = 1; arg[i] != '\0'; i++) {
+        local_opt_idx = _cargparse_search_short_option(self, arg[i]);
+        if (local_opt_idx == -1) {
+            fprintf(stderr, "Error: unknown option '-%c'\n", arg[i]);
+            return CARGPARSE_ERR_UNKNOWN_OPTION;
+        }
+        if (self->options[local_opt_idx].type != CARGPARSE_OPTION_TYPE_BOOL) {
+            fprintf(stderr, "Error: not bool type for option '-%c' in multiple bool definition\n", arg[i]);
+            return CARGPARSE_ERR_NOT_BOOL_IN_MULT_BOOL_DEF;
+        }
+        if ((ret = _cargparse_set_parse_res(CARGPARSE_OPTION_TYPE_BOOL, NULL,
+                                            &self->parse_res[local_opt_idx])) != CARGPARSE_OK) {
+            return ret;
+        }
+    }
+
+    return CARGPARSE_OK;
 }
 
 cargparse_err_e
@@ -293,7 +318,10 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
                     fprintf(stderr, "Error: previous option not set\n");
                     return CARGPARSE_ERR_OPTION_NEEDS_ARG;
                 }
-                if ((ret = _cargparse_handle_short_option(self, arg, &opt_idx)) != CARGPARSE_OK) {
+                if (strlen(arg) > 2 &&
+                    (ret = _cargparse_handle_mult_short_bool_options(self, arg, &opt_idx)) != CARGPARSE_OK) {
+                    return ret;
+                } else if ((ret = _cargparse_handle_short_option(self, arg, &opt_idx)) != CARGPARSE_OK) {
                     return ret;
                 }
                 break;

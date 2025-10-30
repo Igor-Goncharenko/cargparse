@@ -17,9 +17,13 @@ main(int argc, char **argv) {
             "Description example.",
             "Epilog example.",
             CARGPARSE_OPTION_INT('n', "number", "number of something"),
-            CARGPARSE_OPTION_BOOL(CARGPARSE_NO_SHORT, "bool", "bool for something"),
             CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string"),
             CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
+
+            CARGPARSE_OPTION_BOOL('b', "bool1", "bool for something"),
+            CARGPARSE_OPTION_BOOL('v', "bool2", "bool for something"),
+            CARGPARSE_OPTION_BOOL('k', "bool3", "bool for something"),
+
             CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
             CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2"),
             CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3"),
@@ -33,10 +37,14 @@ main(int argc, char **argv) {
         return 1;
     }
 
-    if (cargparse_get_bool_long(&argparse, "bool", &b) == CARGPARSE_OK) {
-        printf("Got bool value: %s\n", b ? "true" : "false");
-    } else {
-        printf("Did not find \"bool\"\n");
+    if (cargparse_get_bool_short(&argparse, 'b', &b) == CARGPARSE_OK) {
+        printf("Got bool value 'b': %s\n", b ? "true" : "false");
+    }
+    if (cargparse_get_bool_short(&argparse, 'v', &b) == CARGPARSE_OK) {
+        printf("Got bool value 'v': %s\n", b ? "true" : "false");
+    }
+    if (cargparse_get_bool_short(&argparse, 'k', &b) == CARGPARSE_OK) {
+        printf("Got bool value 'k': %s\n", b ? "true" : "false");
     }
 
     if (cargparse_get_str_long(&argparse, "some-str", &s, "default value") == CARGPARSE_OK) {
