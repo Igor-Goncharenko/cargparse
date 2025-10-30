@@ -16,8 +16,15 @@ typedef enum {
 } cargparse_option_type_e;
 
 typedef enum {
+    CARGPARSE_FLAG_NONE = 0,
+    CARGPARSE_FLAG_REQUIRED = 1 << 0,
+} cargparse_option_flag_e;
+
+typedef enum {
     CARGPARSE_OK = 0,
     CARGPARSE_DEFAULT_VALUE,
+    CARGPARSE_GOT_ZERO_ARGS,
+    CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS,
     CARGPARSE_ERR_UNKNOWN_OPTION,
     CARGPARSE_ERR_OPTION_NEEDS_ARG,
     CARGPARSE_ERR_OPTION_ALREADY_SET,
@@ -35,6 +42,7 @@ typedef struct {
     const char short_name;
     const char *long_name;
     const char *help;
+    const int flags;
 } cargparse_option_t;
 
 typedef struct {
@@ -67,28 +75,25 @@ typedef struct {
                          _##_name##_parse_res,                                                              \
                          sizeof(_##_name##_options) / sizeof(cargparse_option_t)};
 
-#define CARGPARSE_OPTION_INIT(_type, _short_name, _long_name, _help) \
-    {                                                                \
-        _type,                                                       \
-        _short_name,                                                 \
-        _long_name,                                                  \
-        _help,                                                       \
+#define CARGPARSE_OPTION_INIT(_type, _short_name, _long_name, _help, _flags) \
+    {                                                                        \
+        _type, _short_name, _long_name, _help, _flags,                       \
     }
 
-#define CARGPARSE_OPTION_INT(_short_name, _long_name, _help) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_INT, _short_name, _long_name, _help)
+#define CARGPARSE_OPTION_INT(_short_name, _long_name, _help, _flags) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_INT, _short_name, _long_name, _help, _flags)
 
-#define CARGPARSE_OPTION_FLOAT(_short_name, _long_name, _help) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_FLOAT, _short_name, _long_name, _help)
+#define CARGPARSE_OPTION_FLOAT(_short_name, _long_name, _help, _flags) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_FLOAT, _short_name, _long_name, _help, _flags)
 
-#define CARGPARSE_OPTION_BOOL(_short_name, _long_name, _help) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_BOOL, _short_name, _long_name, _help)
+#define CARGPARSE_OPTION_BOOL(_short_name, _long_name, _help, _flags) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_BOOL, _short_name, _long_name, _help, _flags)
 
-#define CARGPARSE_OPTION_STRING(_short_name, _long_name, _help) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_STR, _short_name, _long_name, _help)
+#define CARGPARSE_OPTION_STRING(_short_name, _long_name, _help, _flags) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_STR, _short_name, _long_name, _help, _flags)
 
-#define CARGPARSE_OPTION_POSITIONAL(_long_name, _help) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, _long_name, _help)
+#define CARGPARSE_OPTION_POSITIONAL(_long_name, _help, _flags) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, _long_name, _help, _flags)
 
 void
 cargparse_print_help(const cargparse_t *const self);

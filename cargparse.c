@@ -271,6 +271,17 @@ _cargparse_handle_mult_short_bool_options(cargparse_t *const self, const char *a
     return CARGPARSE_OK;
 }
 
+static bool
+_cargparse_check_required_options(const cargparse_t *const self) {
+    int i;
+    for (i = 0; i < self->n_options; i++) {
+        if ((self->options[i].flags & CARGPARSE_FLAG_REQUIRED && !self->parse_res[i].is_got)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 cargparse_err_e
 cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
     int i, opt_idx, last_pos_i;
@@ -279,7 +290,7 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
     cargparse_err_e ret;
 
     if (argc == 1) {
-        return CARGPARSE_OK;
+        return CARGPARSE_GOT_ZERO_ARGS;
     }
     if (self == NULL || argv == NULL || argc < 1) {
         fprintf(stderr, "Error: incorrect arguments passed to cargparse_parse\n");
@@ -350,6 +361,11 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
     if (opt_idx != -1) {
         fprintf(stderr, "Error: for last option got but not set\n");
         return CARGPARSE_ERR_OPTION_NEEDS_ARG;
+    }
+
+    if (!_cargparse_check_required_options(self)) {
+        fprintf(stderr, "Error: not all required options set\n");
+        return CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS;
     }
 
     return CARGPARSE_OK;

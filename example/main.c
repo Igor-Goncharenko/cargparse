@@ -16,17 +16,17 @@ main(int argc, char **argv) {
             "test [OPTION]... [FILE]..\ntest [FILE]...",
             "Description example.",
             "Epilog example.",
-            CARGPARSE_OPTION_INT('n', "number", "number of something"),
-            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string"),
-            CARGPARSE_OPTION_FLOAT('f', "float", "some float"),
+            CARGPARSE_OPTION_INT('n', "number", "number of something", CARGPARSE_FLAG_REQUIRED),
+            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE),
+            CARGPARSE_OPTION_FLOAT('f', "float", "some float", CARGPARSE_FLAG_NONE),
 
-            CARGPARSE_OPTION_BOOL('b', "bool1", "bool for something"),
-            CARGPARSE_OPTION_BOOL('v', "bool2", "bool for something"),
-            CARGPARSE_OPTION_BOOL('k', "bool3", "bool for something"),
+            CARGPARSE_OPTION_BOOL('b', "bool1", "bool for something", CARGPARSE_FLAG_NONE),
+            CARGPARSE_OPTION_BOOL('v', "bool2", "bool for something", CARGPARSE_FLAG_NONE),
+            CARGPARSE_OPTION_BOOL('k', "bool3", "bool for something", CARGPARSE_FLAG_NONE),
 
-            CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example"),
-            CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2"),
-            CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3"),
+            CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example", CARGPARSE_FLAG_REQUIRED),
+            CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2", CARGPARSE_FLAG_NONE),
+            CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3", CARGPARSE_FLAG_NONE),
     );
     /* clang-format on */
 
