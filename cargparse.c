@@ -231,7 +231,7 @@ _cargparse_handle_short_option(cargparse_t *const self, const char *arg, int *op
     *opt_idx = _cargparse_search_short_option(self, arg[1]);
     if (*opt_idx == -1) {
         fprintf(stderr, "Error: unknown option '-%c'\n", arg[1]);
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
+        return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
     return _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
 }
@@ -241,7 +241,7 @@ _cargparse_handle_long_option(cargparse_t *const self, const char *arg, int *opt
     *opt_idx = _cargparse_search_long_option(self, arg + 2);
     if (*opt_idx == -1) {
         fprintf(stderr, "Error: unknown option '--%s'\n", arg + 2);
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
+        return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
     return _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
 }
@@ -256,7 +256,7 @@ _cargparse_handle_mult_short_bool_options(cargparse_t *const self, const char *a
         local_opt_idx = _cargparse_search_short_option(self, arg[i]);
         if (local_opt_idx == -1) {
             fprintf(stderr, "Error: unknown option '-%c'\n", arg[i]);
-            return CARGPARSE_ERR_UNKNOWN_OPTION;
+            return CARGPARSE_ERR_OPTION_UNKNOWN;
         }
         if (self->options[local_opt_idx].type != CARGPARSE_OPTION_TYPE_BOOL) {
             fprintf(stderr, "Error: not bool type for option '-%c' in multiple bool definition\n", arg[i]);
@@ -401,118 +401,123 @@ _cargparse_get_check_opt(const cargparse_t *const self, const cargparse_option_t
 }
 
 static cargparse_err_e
-_cargparse_get_bool_value(const cargparse_t *const self, const char short_name, const char *long_name,
-                          bool *result) {
-    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_BOOL, short_name, long_name);
-    if (opt_idx == -1) {
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
-    }
-    *result = self->parse_res[opt_idx].is_got;
+_cargparse_validate_input_params(const cargparse_t *self, const char *long_name, const char short_name,
+                                 const void *result) {
+    if (!self) return CARGPARSE_ERR_NULL_PARSER;
+    if (!long_name && short_name == CARGPARSE_NO_SHORT) return CARGPARSE_ERR_INVALID_OPTION;
+    if (!result) return CARGPARSE_ERR_NULL_OUTPUT;
     return CARGPARSE_OK;
 }
 
 static cargparse_err_e
-_cargparse_get_string_value(const cargparse_t *self, char short_name, const char *long_name,
-                            const char **result, const char *default_value) {
-    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_STR, short_name, long_name);
+_cargparse_get_value_generic(const cargparse_t *const self, const cargparse_option_type_e type,
+                             const char short_name, const char *long_name, void *result,
+                             const void *default_value) {
+    cargparse_err_e ret;
+    if ((ret = _cargparse_validate_input_params(self, long_name, short_name, result)) != CARGPARSE_OK) {
+        return ret;
+    }
+    int opt_idx = _cargparse_get_check_opt(self, type, short_name, long_name);
     if (opt_idx == -1) {
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
+        return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
     if (!self->parse_res[opt_idx].is_got) {
-        *result = default_value;
+        switch (type) {
+            case CARGPARSE_OPTION_TYPE_BOOL:
+                *(bool *)result = *(const bool *)default_value;
+                break;
+            case CARGPARSE_OPTION_TYPE_INT:
+                *(int *)result = *(const int *)default_value;
+                break;
+            case CARGPARSE_OPTION_TYPE_FLOAT:
+                *(float *)result = *(const float *)default_value;
+                break;
+            case CARGPARSE_OPTION_TYPE_STR:
+            case CARGPARSE_OPTION_TYPE_POS:
+                *(const char **)result = (const char *)default_value;
+                break;
+        }
         return CARGPARSE_DEFAULT_VALUE;
     }
-    *result = self->parse_res[opt_idx].valuestr;
-    return CARGPARSE_OK;
-}
 
-static cargparse_err_e
-_cargparse_get_int_value(const cargparse_t *self, char short_name, const char *long_name, int *result,
-                         const int default_value) {
-    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_INT, short_name, long_name);
-    if (opt_idx == -1) {
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
+    switch (type) {
+        case CARGPARSE_OPTION_TYPE_BOOL:
+            *(bool *)result = self->parse_res[opt_idx].is_got;
+            break;
+        case CARGPARSE_OPTION_TYPE_INT:
+            *(int *)result = self->parse_res[opt_idx].valueint;
+            break;
+        case CARGPARSE_OPTION_TYPE_FLOAT:
+            *(float *)result = self->parse_res[opt_idx].valuefloat;
+            break;
+        case CARGPARSE_OPTION_TYPE_STR:
+        case CARGPARSE_OPTION_TYPE_POS:
+            *(const char **)result = self->parse_res[opt_idx].valuestr;
+            break;
     }
-    if (!self->parse_res[opt_idx].is_got) {
-        *result = default_value;
-        return CARGPARSE_DEFAULT_VALUE;
-    }
-    *result = self->parse_res[opt_idx].valueint;
-    return CARGPARSE_OK;
-}
 
-static cargparse_err_e
-_cargparse_get_float_value(const cargparse_t *self, char short_name, const char *long_name, float *result,
-                           const float default_value) {
-    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_FLOAT, short_name, long_name);
-    if (opt_idx == -1) {
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
-    }
-    if (!self->parse_res[opt_idx].is_got) {
-        *result = default_value;
-        return CARGPARSE_DEFAULT_VALUE;
-    }
-    *result = self->parse_res[opt_idx].valuefloat;
     return CARGPARSE_OK;
 }
 
 cargparse_err_e
 cargparse_get_bool_long(const cargparse_t *const self, const char *long_name, bool *valuebool) {
-    return _cargparse_get_bool_value(self, CARGPARSE_NO_SHORT, long_name, valuebool);
+    static const bool default_bool = false;
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_BOOL, CARGPARSE_NO_SHORT, long_name,
+                                        valuebool, &default_bool);
 }
 
 cargparse_err_e
 cargparse_get_bool_short(const cargparse_t *const self, const char short_name, bool *valuebool) {
-    return _cargparse_get_bool_value(self, short_name, CARGPARSE_NO_LONG, valuebool);
+    static const bool default_bool = false;
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_BOOL, short_name, CARGPARSE_NO_LONG,
+                                        valuebool, &default_bool);
 }
 
 cargparse_err_e
 cargparse_get_str_long(const cargparse_t *const self, const char *long_name, const char **valuestr,
                        const char *default_value) {
-    return _cargparse_get_string_value(self, CARGPARSE_NO_SHORT, long_name, valuestr, default_value);
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_STR, CARGPARSE_NO_SHORT, long_name,
+                                        valuestr, (const void *)default_value);
 }
 
 cargparse_err_e
 cargparse_get_str_short(const cargparse_t *const self, const char short_name, const char **valuestr,
                         const char *default_value) {
-    return _cargparse_get_string_value(self, short_name, CARGPARSE_NO_LONG, valuestr, default_value);
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_STR, short_name, CARGPARSE_NO_LONG,
+                                        valuestr, (const void *)default_value);
 }
 
 cargparse_err_e
 cargparse_get_int_long(const cargparse_t *const self, const char *long_name, int *valueint,
                        const int default_value) {
-    return _cargparse_get_int_value(self, CARGPARSE_NO_SHORT, long_name, valueint, default_value);
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_INT, CARGPARSE_NO_SHORT, long_name,
+                                        valueint, &default_value);
 }
 
 cargparse_err_e
 cargparse_get_int_short(const cargparse_t *const self, const char short_name, int *valueint,
                         const int default_value) {
-    return _cargparse_get_int_value(self, short_name, CARGPARSE_NO_LONG, valueint, default_value);
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_INT, short_name, CARGPARSE_NO_LONG,
+                                        valueint, &default_value);
 }
 
 cargparse_err_e
 cargparse_get_float_long(const cargparse_t *const self, const char *long_name, float *valuefloat,
                          const float default_value) {
-    return _cargparse_get_float_value(self, CARGPARSE_NO_SHORT, long_name, valuefloat, default_value);
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_FLOAT, CARGPARSE_NO_SHORT, long_name,
+                                        valuefloat, &default_value);
 }
 
 cargparse_err_e
 cargparse_get_float_short(const cargparse_t *const self, const char short_name, float *valuefloat,
                           const float default_value) {
-    return _cargparse_get_float_value(self, short_name, CARGPARSE_NO_LONG, valuefloat, default_value);
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_FLOAT, short_name, CARGPARSE_NO_LONG,
+                                        valuefloat, &default_value);
 }
 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,
                          const char *default_value) {
-    int opt_idx = _cargparse_get_check_opt(self, CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, long_name);
-    if (opt_idx == -1) {
-        return CARGPARSE_ERR_UNKNOWN_OPTION;
-    }
-    if (!self->parse_res[opt_idx].is_got) {
-        *valuestr = default_value;
-        return CARGPARSE_DEFAULT_VALUE;
-    }
-    *valuestr = self->parse_res[opt_idx].valuestr;
-    return CARGPARSE_OK;
+    return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, long_name,
+                                        valuestr, (const void *)default_value);
 }

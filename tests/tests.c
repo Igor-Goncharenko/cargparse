@@ -141,11 +141,11 @@ test_argparse_no_opts(void) {
 int
 test_argparse_short_name_errors(void) {
     /* only non-existent options */
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNKNOWN_OPTION, "-a");
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_UNKNOWN, "-a");
     /* non-existent options */
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNKNOWN_OPTION, "-a", " 12341");
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_UNKNOWN, "-a", " 12341");
     /* non-existent options after positional */
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNKNOWN_OPTION, "12341", "-a");
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_UNKNOWN, "12341", "-a");
     /* nothing after int option */
     TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_NEEDS_ARG, "-n");
     /* not number after int option */
@@ -161,11 +161,11 @@ test_argparse_short_name_errors(void) {
 int
 test_argparse_long_name_errors(void) {
     /* only non-existent options */
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNKNOWN_OPTION, "--non-existent");
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_UNKNOWN, "--non-existent");
     /* non-existent options */
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNKNOWN_OPTION, "--non-existent", "value1");
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_UNKNOWN, "--non-existent", "value1");
     /* non-existent options after positional */
-    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_UNKNOWN_OPTION, "positional1", "--non-existent");
+    TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_UNKNOWN, "positional1", "--non-existent");
     /* nothing after int option */
     TEST_PARSE_ERROR(&test_argparse, CARGPARSE_ERR_OPTION_NEEDS_ARG, "--float");
     /* not number after int option */
@@ -291,31 +291,31 @@ test_argparse_getters_unknown(void) {
     }
 
     TEST_EQ(cargparse_get_bool_long(&test_argparse, "bool-unk", &b),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_str_long(&test_argparse, "some-str-unk", &s, "default str"),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_float_short(&test_argparse, 'p', &f, -999.9),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_float_long(&test_argparse, "float-ukn", &f, -1111.1),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_int_short(&test_argparse, 'a', &d, 1234),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_int_long(&test_argparse, "number-unk", &d, -4321),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_positional(&test_argparse, "positional1-ukn", &s, "pos1_default"),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_positional(&test_argparse, "positional2-ukn", &s, "pos2_default"),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     TEST_EQ(cargparse_get_positional(&test_argparse, "positional3-ukn", &s, "pos3_default"),
-            (cargparse_err_e)CARGPARSE_ERR_UNKNOWN_OPTION);
+            (cargparse_err_e)CARGPARSE_ERR_OPTION_UNKNOWN);
 
     CARGPARSE_PARSE_RES_CLEANUP(&test_argparse);
     return 0;
@@ -340,7 +340,7 @@ test_argparse_getters_defaults(void) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
     }
 
-    TEST_EQ(cargparse_get_bool_long(&test_argparse, "bool", &b), (cargparse_err_e)CARGPARSE_OK);
+    TEST_EQ(cargparse_get_bool_long(&test_argparse, "bool", &b), (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
     TEST_EQ(b, (bool)false);
 
     TEST_EQ(cargparse_get_str_long(&test_argparse, "some-str", &s, "default str"),
