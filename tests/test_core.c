@@ -33,8 +33,6 @@ cmp_options(const cargparse_option_t *opt1, const cargparse_option_t *opt2) {
 int
 cmp_parse_res(const cargparse_parse_res_t *pr1, const cargparse_parse_res_t *pr2) {
     if (pr1->is_got != pr2->is_got) return 0;
-    if (pr1->valueint != pr2->valueint) return 0;
-    if (pr1->valuefloat != pr2->valuefloat) return 0;
     if (pr1->valuestr && pr2->valuestr && strcmp(pr1->valuestr, pr2->valuestr) != 0) return 0;
     if ((pr1->valuestr && !pr2->valuestr) || (!pr1->valuestr && pr2->valuestr)) return 0;
     return 1;

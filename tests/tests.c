@@ -109,8 +109,8 @@ test_argparse_all_opts(void) {
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
 
     const cargparse_parse_res_t parse_res[] = {
-        {true, 10, 0.0, NULL},  {true, 0, 0.0, NULL},   {true, 0, 0.0, "Some str"}, {true, 0, 8.89, NULL},
-        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+        {true, "10"},   {true, NULL},   {true, "Some str"}, {true, "8.89"},
+        {true, "pos1"}, {true, "pos2"}, {true, "pos3"},
     };
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
@@ -127,8 +127,8 @@ test_argparse_no_opts(void) {
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
 
     const cargparse_parse_res_t parse_res[] = {
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, NULL}, {false, NULL}, {false, NULL}, {false, NULL},
+        {false, NULL}, {false, NULL}, {false, NULL},
     };
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
@@ -181,24 +181,24 @@ test_argparse_long_name_errors(void) {
 int
 test_argparse_positional(void) {
     const cargparse_parse_res_t parse_res1[] = {
-        {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-        {true, 0, 0.0, "pos1"}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, NULL},  {false, NULL}, {false, NULL}, {false, NULL},
+        {true, "pos1"}, {false, NULL}, {false, NULL},
     };
     const cargparse_parse_res_t parse_res2[] = {
-        {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {false, 0, 0.0, NULL},
+        {false, NULL},  {false, NULL},  {false, NULL}, {false, NULL},
+        {true, "pos1"}, {true, "pos2"}, {false, NULL},
     };
     const cargparse_parse_res_t parse_res3[] = {
-        {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},
-        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+        {false, NULL},  {false, NULL},  {false, NULL},  {false, NULL},
+        {true, "pos1"}, {true, "pos2"}, {true, "pos3"},
     };
     const cargparse_parse_res_t parse_res4[] = {
-        {false, 0, 0.0, NULL},  {true, 0, 0.0, NULL},   {false, 0, 0.0, NULL},  {true, 0, -89.09, NULL},
-        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+        {false, NULL},  {true, NULL},   {false, NULL},  {true, "-89.09"},
+        {true, "pos1"}, {true, "pos2"}, {true, "pos3"},
     };
     const cargparse_parse_res_t parse_res5[] = {
-        {true, 10, 0.0, NULL},  {false, 0, 0.0, NULL},  {false, 0, 0.0, NULL},  {true, 0, 89.09, NULL},
-        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+        {true, "10"},   {false, NULL},  {false, NULL},  {true, "89.09"},
+        {true, "pos1"}, {true, "pos2"}, {true, "pos3"},
     };
 
     TEST_PARSE_RES(&test_argparse, parse_res1, "pos1");
@@ -223,8 +223,8 @@ test_argparse_positional(void) {
 int
 test_argparse_getters(void) {
     bool b;
-    int d;
-    float f;
+    long d;
+    double f;
     const char *s;
 
     int i;
@@ -233,8 +233,8 @@ test_argparse_getters(void) {
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
 
     const cargparse_parse_res_t parse_res[] = {
-        {true, 10, 0.0, NULL},  {true, 0, 0.0, NULL},   {true, 0, 0.0, "Some str"}, {true, 0, 8.89, NULL},
-        {true, 0, 0.0, "pos1"}, {true, 0, 0.0, "pos2"}, {true, 0, 0.0, "pos3"},
+        {true, "10"},   {true, NULL},   {true, "Some str"}, {true, "8.89"},
+        {true, "pos1"}, {true, "pos2"}, {true, "pos3"},
     };
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
@@ -247,16 +247,16 @@ test_argparse_getters(void) {
     TEST(strcmp(s, "Some str") == 0);
 
     TEST_EQ(cargparse_get_float_short(&test_argparse, 'f', &f, 0.0), (cargparse_err_e)CARGPARSE_OK);
-    TEST_EQ(f, (float)8.89);
+    TEST_EQ((long)(f * 1000), (long)(8.89 * 1000));
 
     TEST_EQ(cargparse_get_float_long(&test_argparse, "float", &f, 0.0), (cargparse_err_e)CARGPARSE_OK);
-    TEST_EQ(f, (float)8.89);
+    TEST_EQ((long)(f * 1000), (long)(8.89 * 1000));
 
     TEST_EQ(cargparse_get_int_short(&test_argparse, 'n', &d, 0), (cargparse_err_e)CARGPARSE_OK);
-    TEST_EQ(d, (int)10);
+    TEST_EQ(d, (long)10);
 
     TEST_EQ(cargparse_get_int_long(&test_argparse, "number", &d, 0), (cargparse_err_e)CARGPARSE_OK);
-    TEST_EQ(d, (int)10);
+    TEST_EQ(d, (long)10);
 
     TEST_EQ(cargparse_get_positional(&test_argparse, "positional1", &s, NULL), (cargparse_err_e)CARGPARSE_OK);
     TEST(strcmp(s, "pos1") == 0);
@@ -274,8 +274,8 @@ test_argparse_getters(void) {
 int
 test_argparse_getters_unknown(void) {
     bool b;
-    int d;
-    float f;
+    long d;
+    double f;
     const char *s;
 
     int i;
@@ -283,8 +283,8 @@ test_argparse_getters_unknown(void) {
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
 
     const cargparse_parse_res_t parse_res[] = {
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, NULL}, {false, NULL}, {false, NULL}, {false, NULL},
+        {false, NULL}, {false, NULL}, {false, NULL},
     };
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
@@ -324,8 +324,8 @@ test_argparse_getters_unknown(void) {
 int
 test_argparse_getters_defaults(void) {
     bool b;
-    int d;
-    float f;
+    long d;
+    double f;
     const char *s;
 
     int i;
@@ -333,8 +333,8 @@ test_argparse_getters_defaults(void) {
     cargparse_parse(&test_argparse, sizeof(argv) / sizeof(char *), argv);
 
     const cargparse_parse_res_t parse_res[] = {
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
-        {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL}, {false, 0, 0.0, NULL},
+        {false, NULL}, {false, NULL}, {false, NULL}, {false, NULL},
+        {false, NULL}, {false, NULL}, {false, NULL},
     };
     for (i = 0; i < test_argparse.n_options; i++) {
         TEST(cmp_parse_res(&test_argparse.parse_res[i], &parse_res[i]));
@@ -349,18 +349,18 @@ test_argparse_getters_defaults(void) {
 
     TEST_EQ(cargparse_get_float_short(&test_argparse, 'f', &f, -999.9),
             (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
-    TEST_EQ(f, (float)-999.9);
+    TEST_EQ((long)(f * 1000), (long)(-999.9 * 1000));
 
     TEST_EQ(cargparse_get_float_long(&test_argparse, "float", &f, -1111.1),
             (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
-    TEST_EQ(f, (float)-1111.1);
+    TEST_EQ((long)(f * 1000), (long)(-1111.1 * 1000));
 
     TEST_EQ(cargparse_get_int_short(&test_argparse, 'n', &d, 1234), (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
-    TEST_EQ(d, (int)1234);
+    TEST_EQ(d, (long)1234);
 
     TEST_EQ(cargparse_get_int_long(&test_argparse, "number", &d, -4321),
             (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);
-    TEST_EQ(d, (int)-4321);
+    TEST_EQ(d, (long)-4321);
 
     TEST_EQ(cargparse_get_positional(&test_argparse, "positional1", &s, "pos1_default"),
             (cargparse_err_e)CARGPARSE_DEFAULT_VALUE);

@@ -52,8 +52,6 @@ typedef struct {
 
 typedef struct {
     bool is_got;
-    int valueint;
-    float valuefloat;
     const char *valuestr;
 } cargparse_parse_res_t;
 
@@ -121,20 +119,20 @@ cargparse_get_str_short(const cargparse_t *const self, const char short_name, co
                         const char *default_value);
 
 cargparse_err_e
-cargparse_get_int_long(const cargparse_t *const self, const char *long_name, int *valueint,
-                       const int default_value);
+cargparse_get_int_long(const cargparse_t *const self, const char *long_name, long *valueint,
+                       const long default_value);
 
 cargparse_err_e
-cargparse_get_int_short(const cargparse_t *const self, const char short_name, int *valueint,
-                        const int default_value);
+cargparse_get_int_short(const cargparse_t *const self, const char short_name, long *valueint,
+                        const long default_value);
 
 cargparse_err_e
-cargparse_get_float_long(const cargparse_t *const self, const char *long_name, float *valuefloat,
-                         const float default_value);
+cargparse_get_float_long(const cargparse_t *const self, const char *long_name, double *valuefloat,
+                         const double default_value);
 
 cargparse_err_e
-cargparse_get_float_short(const cargparse_t *const self, const char short_name, float *valuefloat,
-                          const float default_value);
+cargparse_get_float_short(const cargparse_t *const self, const char short_name, double *valuefloat,
+                          const double default_value);
 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,
