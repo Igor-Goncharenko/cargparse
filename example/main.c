@@ -5,8 +5,8 @@
 /* ./argparse_example pos1 -n 10 --bool pos2 --some-str SOme\ str --float 89.342 -- pos3 */
 int
 main(int argc, char **argv) {
-    int i;
-    float f;
+    long i;
+    double f;
     bool b;
     const char *s;
     cargparse_err_e ret;
@@ -54,13 +54,13 @@ main(int argc, char **argv) {
     }
 
     if (cargparse_get_int_short(&argparse, 'n', &i, 0) == CARGPARSE_OK) {
-        printf("Got int value: %d\n", i);
+        printf("Got int value: %ld\n", i);
     } else {
         printf("Did not find 'n'\n");
     }
 
     if (cargparse_get_float_short(&argparse, 'f', &f, 0.0) == CARGPARSE_OK) {
-        printf("Got float value: %f\n", f);
+        printf("Got float value: %lf\n", f);
     } else {
         printf("Did not find 'f'\n");
     }

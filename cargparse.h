@@ -48,11 +48,12 @@ typedef struct {
     const char *long_name;
     const char *help;
     const int flags;
+    /*const int nargs;*/
 } cargparse_option_t;
 
 typedef struct {
     bool is_got;
-    const char *valuestr;
+    char **valuestr;
 } cargparse_parse_res_t;
 
 typedef struct {
