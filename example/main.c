@@ -2,7 +2,7 @@
 
 #include "cargparse.h"
 
-/* ./argparse_example pos1 -n 10 --bool pos2 --some-str SOme\ str --float 89.342 -- pos3 */
+/* ./argparse_example test -n 10 11 12 --float 8.001 -10.1 --some-str Some\ str -- pos1 pos2 */
 int
 main(int argc, char **argv) {
     long i;
@@ -16,9 +16,9 @@ main(int argc, char **argv) {
             "test [OPTION]... [FILE]..\ntest [FILE]...",
             "Description example.",
             "Epilog example.",
-            CARGPARSE_OPTION_INT('n', "number", "number of something", CARGPARSE_FLAG_REQUIRED),
-            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE),
-            CARGPARSE_OPTION_FLOAT('f', "float", "some float", CARGPARSE_FLAG_NONE),
+            CARGPARSE_OPTION_INT('n', "number", "number of something", CARGPARSE_FLAG_REQUIRED, CARGPARSE_NARGS_ONE_OR_MORE),
+            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE, 1),
+            CARGPARSE_OPTION_FLOAT('f', "float", "some float", CARGPARSE_FLAG_NONE, 2),
 
             CARGPARSE_OPTION_BOOL('b', "bool1", "bool for something", CARGPARSE_FLAG_NONE),
             CARGPARSE_OPTION_BOOL('v', "bool2", "bool for something", CARGPARSE_FLAG_NONE),

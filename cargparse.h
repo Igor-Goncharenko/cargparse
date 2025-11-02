@@ -48,12 +48,13 @@ typedef struct {
     const char *long_name;
     const char *help;
     const int flags;
-    /*const int nargs;*/
+    const int nargs;
 } cargparse_option_t;
 
 typedef struct {
     bool is_got;
     char **valuestr;
+    int nargs;
 } cargparse_parse_res_t;
 
 typedef struct {
@@ -64,6 +65,9 @@ typedef struct {
     cargparse_parse_res_t *parse_res;
     const int n_options;
 } cargparse_t;
+
+#define CARGPARSE_NARGS_ONE_OR_MORE (-111)
+#define CARGPARSE_NARGS_ZERO_OR_MORE (-222)
 
 #define CARGPARSE_NO_SHORT (-1)
 #define CARGPARSE_NO_LONG (NULL)
@@ -79,25 +83,25 @@ typedef struct {
                          _##_name##_parse_res,                                                              \
                          sizeof(_##_name##_options) / sizeof(cargparse_option_t)};
 
-#define CARGPARSE_OPTION_INIT(_type, _short_name, _long_name, _help, _flags) \
-    {                                                                        \
-        _type, _short_name, _long_name, _help, _flags,                       \
+#define CARGPARSE_OPTION_INIT(_type, _short_name, _long_name, _help, _flags, _nargs) \
+    {                                                                                \
+        _type, _short_name, _long_name, _help, _flags, _nargs,                       \
     }
 
-#define CARGPARSE_OPTION_INT(_short_name, _long_name, _help, _flags) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_INT, _short_name, _long_name, _help, _flags)
+#define CARGPARSE_OPTION_INT(_short_name, _long_name, _help, _flags, _nargs) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_INT, _short_name, _long_name, _help, _flags, _nargs)
 
-#define CARGPARSE_OPTION_FLOAT(_short_name, _long_name, _help, _flags) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_FLOAT, _short_name, _long_name, _help, _flags)
+#define CARGPARSE_OPTION_FLOAT(_short_name, _long_name, _help, _flags, _nargs) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_FLOAT, _short_name, _long_name, _help, _flags, _nargs)
 
 #define CARGPARSE_OPTION_BOOL(_short_name, _long_name, _help, _flags) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_BOOL, _short_name, _long_name, _help, _flags)
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_BOOL, _short_name, _long_name, _help, _flags, 1)
 
-#define CARGPARSE_OPTION_STRING(_short_name, _long_name, _help, _flags) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_STR, _short_name, _long_name, _help, _flags)
+#define CARGPARSE_OPTION_STRING(_short_name, _long_name, _help, _flags, _nargs) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_STR, _short_name, _long_name, _help, _flags, _nargs)
 
 #define CARGPARSE_OPTION_POSITIONAL(_long_name, _help, _flags) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, _long_name, _help, _flags)
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, _long_name, _help, _flags, 1)
 
 void
 cargparse_print_help(const cargparse_t *const self);
