@@ -42,6 +42,8 @@ typedef enum {
     CARGPARSE_ERR_NOT_BOOL_IN_MULT_BOOL_DEF,
 
     CARGPARSE_ERR_NARG_OUT_OF_RANGE,
+    CARGPARSE_ZERO_NARGS,
+    CARGPARSE_OPT_NOT_GOT,
 } cargparse_err_e;
 
 typedef struct {
@@ -144,6 +146,18 @@ cargparse_get_float_short(const cargparse_t *const self, const char short_name, 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,
                          const char *default_value);
+
+bool
+cargparse_has_option_long(const cargparse_t *const self, const char *long_name);
+
+bool
+cargparse_has_option_short(const cargparse_t *const self, const char short_name);
+
+cargparse_err_e
+cargparse_get_arg_count_long(const cargparse_t *const self, const char *long_name, unsigned *count);
+
+cargparse_err_e
+cargparse_get_arg_count_short(const cargparse_t *const self, const char short_name, unsigned *count);
 
 #ifdef __cplusplus
 }

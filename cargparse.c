@@ -190,21 +190,17 @@ _cargparse_is_valid_float(const char *str) {
 static cargparse_err_e
 _cargparse_set_parse_res(const cargparse_option_type_e type, char **arg_str, cargparse_parse_res_t *parse_res,
                          const cargparse_option_t *opt) {
-    cargparse_err_e ret = CARGPARSE_OK;
     switch (type) {
+        case CARGPARSE_OPTION_TYPE_BOOL:
+            return CARGPARSE_ERR_INVALID_VALUE;
         case CARGPARSE_OPTION_TYPE_STR:
         case CARGPARSE_OPTION_TYPE_POS:
-        case CARGPARSE_OPTION_TYPE_BOOL:
             break;
         case CARGPARSE_OPTION_TYPE_INT:
-            if (!_cargparse_is_valid_int(*arg_str)) {
-                ret = CARGPARSE_ERR_INVALID_VALUE;
-            }
+            if (!_cargparse_is_valid_int(*arg_str)) return CARGPARSE_ERR_INVALID_VALUE;
             break;
         case CARGPARSE_OPTION_TYPE_FLOAT:
-            if (!_cargparse_is_valid_float(*arg_str)) {
-                ret = CARGPARSE_ERR_INVALID_VALUE;
-            }
+            if (!_cargparse_is_valid_float(*arg_str)) return CARGPARSE_ERR_INVALID_VALUE;
             break;
     }
     if (parse_res->nargs == 0) {
@@ -215,24 +211,7 @@ _cargparse_set_parse_res(const cargparse_option_type_e type, char **arg_str, car
         parse_res->nargs++;
         parse_res->is_got = (opt->nargs <= parse_res->nargs) ? true : false;
     }
-    return ret;
-}
-
-static void
-_cargparse_handle_bool_option(cargparse_t *const self, const int opt_idx, int *opt_idx_ptr) {
-    if (self->options[opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
-        self->parse_res[opt_idx].nargs = 0;
-        self->parse_res[opt_idx].is_got = true;
-        *opt_idx_ptr = -1;
-    }
-}
-
-static void
-_cargparse_handle_zero_ore_more_option(cargparse_t *const self, const int opt_idx) {
-    if (self->options[opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE) {
-        self->parse_res[opt_idx].is_got = true;
-        self->parse_res[opt_idx].nargs = 0;
-    }
+    return CARGPARSE_OK;
 }
 
 static cargparse_err_e
@@ -264,8 +243,12 @@ _cargparse_handle_short_option(cargparse_t *const self, const char *arg, int *op
         fprintf(stderr, "Error: unknown option '-%c'\n", arg[1]);
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
-    _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
-    _cargparse_handle_zero_ore_more_option(self, *opt_idx);
+    if (self->options[*opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
+        self->parse_res[*opt_idx].is_got = true;
+        *opt_idx = -1;
+    } else if (self->options[*opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE) {
+        self->parse_res[*opt_idx].is_got = true;
+    }
     return CARGPARSE_OK;
 }
 
@@ -276,14 +259,17 @@ _cargparse_handle_long_option(cargparse_t *const self, const char *arg, int *opt
         fprintf(stderr, "Error: unknown option '--%s'\n", arg + 2);
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
-    _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
-    _cargparse_handle_zero_ore_more_option(self, *opt_idx);
+    if (self->options[*opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
+        self->parse_res[*opt_idx].is_got = true;
+        *opt_idx = -1;
+    } else if (self->options[*opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE) {
+        self->parse_res[*opt_idx].is_got = true;
+    }
     return CARGPARSE_OK;
 }
 
 static cargparse_err_e
 _cargparse_handle_mult_short_bool_options(cargparse_t *const self, const char *arg, int *opt_idx) {
-    cargparse_err_e ret;
     int local_opt_idx, i;
     *opt_idx = -1;
 
@@ -297,10 +283,7 @@ _cargparse_handle_mult_short_bool_options(cargparse_t *const self, const char *a
             fprintf(stderr, "Error: not bool type for option '-%c' in multiple bool definition\n", arg[i]);
             return CARGPARSE_ERR_NOT_BOOL_IN_MULT_BOOL_DEF;
         }
-        if ((ret = _cargparse_set_parse_res(CARGPARSE_OPTION_TYPE_BOOL, NULL, &self->parse_res[local_opt_idx],
-                                            &self->options[local_opt_idx])) != CARGPARSE_OK) {
-            return ret;
-        }
+        self->parse_res[local_opt_idx].is_got = true;
     }
 
     return CARGPARSE_OK;
@@ -467,7 +450,10 @@ _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_opti
     if (opt_idx == -1) {
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
-    if (narg + 1 > (unsigned)self->parse_res[opt_idx].nargs) {
+    if (self->options[opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE && self->parse_res[opt_idx].nargs == 0) {
+        return CARGPARSE_ZERO_NARGS;
+    } else if (self->options[opt_idx].type != CARGPARSE_OPTION_TYPE_BOOL &&
+               narg + 1 > (unsigned)self->parse_res[opt_idx].nargs) {
         return CARGPARSE_ERR_NARG_OUT_OF_RANGE;
     }
     if (!self->parse_res[opt_idx].is_got) {
@@ -571,4 +557,48 @@ cargparse_get_positional(const cargparse_t *const self, const char *long_name, c
                          const char *default_value) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, long_name,
                                         valuestr, (const void *)default_value, 0);
+}
+
+static bool
+_cargparse_has_option(const cargparse_t *const self, const char short_name, const char *long_name) {
+    int opt_idx = _cargparse_find_opt(self, short_name, long_name);
+    return (opt_idx == -1) ? false : true;
+}
+
+bool
+cargparse_has_option_long(const cargparse_t *const self, const char *long_name) {
+    return _cargparse_has_option(self, CARGPARSE_NO_SHORT, long_name);
+}
+
+bool
+cargparse_has_option_short(const cargparse_t *const self, const char short_name) {
+    return _cargparse_has_option(self, short_name, CARGPARSE_NO_LONG);
+}
+
+static cargparse_err_e
+_cargparse_get_arg_count(const cargparse_t *const self, const char short_name, const char *long_name,
+                         unsigned *count) {
+    int opt_idx = _cargparse_find_opt(self, short_name, long_name);
+    if (opt_idx == -1) {
+        *count = 0;
+        return CARGPARSE_ERR_OPTION_UNKNOWN;
+    }
+    if (!self->parse_res[opt_idx].is_got) {
+        *count = 0;
+        return CARGPARSE_OPT_NOT_GOT;
+    }
+
+    *count = self->parse_res[opt_idx].nargs;
+
+    return CARGPARSE_OK;
+}
+
+cargparse_err_e
+cargparse_get_arg_count_long(const cargparse_t *const self, const char *long_name, unsigned *count) {
+    return _cargparse_get_arg_count(self, CARGPARSE_NO_SHORT, long_name, count);
+}
+
+cargparse_err_e
+cargparse_get_arg_count_short(const cargparse_t *const self, const char short_name, unsigned *count) {
+    return _cargparse_get_arg_count(self, short_name, CARGPARSE_NO_LONG, count);
 }
