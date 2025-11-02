@@ -448,7 +448,7 @@ _cargparse_validate_input_params(const cargparse_t *self, const char *long_name,
 static cargparse_err_e
 _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_option_type_e type,
                              const char short_name, const char *long_name, void *result,
-                             const void *default_value) {
+                             const void *default_value, const unsigned narg) {
     cargparse_err_e ret;
     if ((ret = _cargparse_validate_input_params(self, long_name, short_name, result)) != CARGPARSE_OK) {
         return ret;
@@ -456,6 +456,9 @@ _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_opti
     int opt_idx = _cargparse_get_check_opt(self, type, short_name, long_name);
     if (opt_idx == -1) {
         return CARGPARSE_ERR_OPTION_UNKNOWN;
+    }
+    if (narg > (unsigned)(self->parse_res[opt_idx].nargs - 1)) {
+        return CARGPARSE_ERR_NARG_OUT_OF_RANGE;
     }
     if (!self->parse_res[opt_idx].is_got) {
         switch (type) {
@@ -476,23 +479,21 @@ _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_opti
         return CARGPARSE_DEFAULT_VALUE;
     }
 
+    const char *valuestr = *(self->parse_res[opt_idx].valuestr + narg);
+
     switch (type) {
         case CARGPARSE_OPTION_TYPE_BOOL:
             *(bool *)result = self->parse_res[opt_idx].is_got;
             break;
         case CARGPARSE_OPTION_TYPE_INT:
-            if ((ret = _cargparse_parse_int(*self->parse_res[opt_idx].valuestr, (long *)result)) !=
-                CARGPARSE_OK)
-                return ret;
+            if ((ret = _cargparse_parse_int(valuestr, (long *)result)) != CARGPARSE_OK) return ret;
             break;
         case CARGPARSE_OPTION_TYPE_FLOAT:
-            if ((ret = _cargparse_parse_float(*self->parse_res[opt_idx].valuestr, (double *)result)) !=
-                CARGPARSE_OK)
-                return ret;
+            if ((ret = _cargparse_parse_float(valuestr, (double *)result)) != CARGPARSE_OK) return ret;
             break;
         case CARGPARSE_OPTION_TYPE_STR:
         case CARGPARSE_OPTION_TYPE_POS:
-            *(const char **)result = *self->parse_res[opt_idx].valuestr;
+            *(const char **)result = valuestr;
             break;
     }
 
@@ -503,61 +504,61 @@ cargparse_err_e
 cargparse_get_bool_long(const cargparse_t *const self, const char *long_name, bool *valuebool) {
     static const bool default_bool = false;
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_BOOL, CARGPARSE_NO_SHORT, long_name,
-                                        valuebool, &default_bool);
+                                        valuebool, &default_bool, 0);
 }
 
 cargparse_err_e
 cargparse_get_bool_short(const cargparse_t *const self, const char short_name, bool *valuebool) {
     static const bool default_bool = false;
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_BOOL, short_name, CARGPARSE_NO_LONG,
-                                        valuebool, &default_bool);
+                                        valuebool, &default_bool, 0);
 }
 
 cargparse_err_e
 cargparse_get_str_long(const cargparse_t *const self, const char *long_name, const char **valuestr,
-                       const char *default_value) {
+                       const char *default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_STR, CARGPARSE_NO_SHORT, long_name,
-                                        valuestr, (const void *)default_value);
+                                        valuestr, (const void *)default_value, idx);
 }
 
 cargparse_err_e
 cargparse_get_str_short(const cargparse_t *const self, const char short_name, const char **valuestr,
-                        const char *default_value) {
+                        const char *default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_STR, short_name, CARGPARSE_NO_LONG,
-                                        valuestr, (const void *)default_value);
+                                        valuestr, (const void *)default_value, idx);
 }
 
 cargparse_err_e
 cargparse_get_int_long(const cargparse_t *const self, const char *long_name, long *valueint,
-                       const long default_value) {
+                       const long default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_INT, CARGPARSE_NO_SHORT, long_name,
-                                        valueint, &default_value);
+                                        valueint, &default_value, idx);
 }
 
 cargparse_err_e
 cargparse_get_int_short(const cargparse_t *const self, const char short_name, long *valueint,
-                        const long default_value) {
+                        const long default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_INT, short_name, CARGPARSE_NO_LONG,
-                                        valueint, &default_value);
+                                        valueint, &default_value, idx);
 }
 
 cargparse_err_e
 cargparse_get_float_long(const cargparse_t *const self, const char *long_name, double *valuefloat,
-                         const double default_value) {
+                         const double default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_FLOAT, CARGPARSE_NO_SHORT, long_name,
-                                        valuefloat, &default_value);
+                                        valuefloat, &default_value, idx);
 }
 
 cargparse_err_e
 cargparse_get_float_short(const cargparse_t *const self, const char short_name, double *valuefloat,
-                          const double default_value) {
+                          const double default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_FLOAT, short_name, CARGPARSE_NO_LONG,
-                                        valuefloat, &default_value);
+                                        valuefloat, &default_value, idx);
 }
 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,
                          const char *default_value) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, long_name,
-                                        valuestr, (const void *)default_value);
+                                        valuestr, (const void *)default_value, 0);
 }

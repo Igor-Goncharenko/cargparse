@@ -40,6 +40,8 @@ typedef enum {
     CARGPARSE_ERR_UNEXPECTED_POSITIONAL,
     CARGPARSE_ERR_INVALID_VALUE,
     CARGPARSE_ERR_NOT_BOOL_IN_MULT_BOOL_DEF,
+
+    CARGPARSE_ERR_NARG_OUT_OF_RANGE,
 } cargparse_err_e;
 
 typedef struct {
@@ -117,27 +119,27 @@ cargparse_get_bool_short(const cargparse_t *const self, const char short_name, b
 
 cargparse_err_e
 cargparse_get_str_long(const cargparse_t *const self, const char *long_name, const char **valuestr,
-                       const char *default_value);
+                       const char *default_value, const unsigned idx);
 
 cargparse_err_e
 cargparse_get_str_short(const cargparse_t *const self, const char short_name, const char **valuestr,
-                        const char *default_value);
+                        const char *default_value, const unsigned idx);
 
 cargparse_err_e
 cargparse_get_int_long(const cargparse_t *const self, const char *long_name, long *valueint,
-                       const long default_value);
+                       const long default_value, const unsigned idx);
 
 cargparse_err_e
 cargparse_get_int_short(const cargparse_t *const self, const char short_name, long *valueint,
-                        const long default_value);
+                        const long default_value, const unsigned idx);
 
 cargparse_err_e
 cargparse_get_float_long(const cargparse_t *const self, const char *long_name, double *valuefloat,
-                         const double default_value);
+                         const double default_value, const unsigned idx);
 
 cargparse_err_e
 cargparse_get_float_short(const cargparse_t *const self, const char short_name, double *valuefloat,
-                          const double default_value);
+                          const double default_value, const unsigned idx);
 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,

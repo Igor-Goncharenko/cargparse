@@ -5,6 +5,7 @@
 /* ./argparse_example test -n 10 11 12 --float 8.001 -10.1 --some-str Some\ str -- pos1 pos2 */
 int
 main(int argc, char **argv) {
+    unsigned idx;
     long i;
     double f;
     bool b;
@@ -47,22 +48,22 @@ main(int argc, char **argv) {
         printf("Got bool value 'k': %s\n", b ? "true" : "false");
     }
 
-    if (cargparse_get_str_long(&argparse, "some-str", &s, "default value") == CARGPARSE_OK) {
-        printf("Got string value: \"%s\"\n", s);
-    } else {
-        printf("Did not find \"some-str\"\n");
+    idx = 0;
+    while (cargparse_get_str_long(&argparse, "some-str", &s, "default value", idx) == CARGPARSE_OK) {
+        printf("%u) Got string value: \"%s\"\n", idx + 1, s);
+        idx++;
     }
 
-    if (cargparse_get_int_short(&argparse, 'n', &i, 0) == CARGPARSE_OK) {
-        printf("Got int value: %ld\n", i);
-    } else {
-        printf("Did not find 'n'\n");
+    idx = 0;
+    while (cargparse_get_int_short(&argparse, 'n', &i, 0, idx) == CARGPARSE_OK) {
+        printf("%u) Got int value: %ld\n", idx + 1, i);
+        idx++;
     }
 
-    if (cargparse_get_float_short(&argparse, 'f', &f, 0.0) == CARGPARSE_OK) {
-        printf("Got float value: %lf\n", f);
-    } else {
-        printf("Did not find 'f'\n");
+    idx = 0;
+    while (cargparse_get_float_short(&argparse, 'f', &f, 0.0, idx) == CARGPARSE_OK) {
+        printf("%u) Got float value: %lf\n", idx + 1, f);
+        idx++;
     }
 
     if (cargparse_get_positional(&argparse, "positional1", &s, "pos1_default") == CARGPARSE_OK) {
