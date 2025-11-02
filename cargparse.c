@@ -218,15 +218,21 @@ _cargparse_set_parse_res(const cargparse_option_type_e type, char **arg_str, car
     return ret;
 }
 
-static cargparse_err_e
+static void
 _cargparse_handle_bool_option(cargparse_t *const self, const int opt_idx, int *opt_idx_ptr) {
-    cargparse_err_e ret = CARGPARSE_OK;
     if (self->options[opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
+        self->parse_res[opt_idx].nargs = 0;
+        self->parse_res[opt_idx].is_got = true;
         *opt_idx_ptr = -1;
-        ret = _cargparse_set_parse_res(self->options[opt_idx].type, NULL, &self->parse_res[opt_idx],
-                                       &self->options[opt_idx]);
     }
-    return ret;
+}
+
+static void
+_cargparse_handle_zero_ore_more_option(cargparse_t *const self, const int opt_idx) {
+    if (self->options[opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE) {
+        self->parse_res[opt_idx].is_got = true;
+        self->parse_res[opt_idx].nargs = 0;
+    }
 }
 
 static cargparse_err_e
@@ -258,7 +264,9 @@ _cargparse_handle_short_option(cargparse_t *const self, const char *arg, int *op
         fprintf(stderr, "Error: unknown option '-%c'\n", arg[1]);
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
-    return _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
+    _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
+    _cargparse_handle_zero_ore_more_option(self, *opt_idx);
+    return CARGPARSE_OK;
 }
 
 static cargparse_err_e
@@ -268,7 +276,9 @@ _cargparse_handle_long_option(cargparse_t *const self, const char *arg, int *opt
         fprintf(stderr, "Error: unknown option '--%s'\n", arg + 2);
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
-    return _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
+    _cargparse_handle_bool_option(self, *opt_idx, opt_idx);
+    _cargparse_handle_zero_ore_more_option(self, *opt_idx);
+    return CARGPARSE_OK;
 }
 
 static cargparse_err_e
@@ -457,7 +467,7 @@ _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_opti
     if (opt_idx == -1) {
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
-    if (narg > (unsigned)(self->parse_res[opt_idx].nargs - 1)) {
+    if (narg + 1 > (unsigned)self->parse_res[opt_idx].nargs) {
         return CARGPARSE_ERR_NARG_OUT_OF_RANGE;
     }
     if (!self->parse_res[opt_idx].is_got) {

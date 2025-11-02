@@ -18,7 +18,7 @@ main(int argc, char **argv) {
             "Description example.",
             "Epilog example.",
             CARGPARSE_OPTION_INT('n', "number", "number of something", CARGPARSE_FLAG_REQUIRED, CARGPARSE_NARGS_ONE_OR_MORE),
-            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE, 1),
+            CARGPARSE_OPTION_STRING(CARGPARSE_NO_SHORT, "some-str", "some string", CARGPARSE_FLAG_NONE, CARGPARSE_NARGS_ZERO_OR_MORE),
             CARGPARSE_OPTION_FLOAT('f', "float", "some float", CARGPARSE_FLAG_NONE, 2),
 
             CARGPARSE_OPTION_BOOL('b', "bool1", "bool for something", CARGPARSE_FLAG_NONE),
