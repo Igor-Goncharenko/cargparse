@@ -104,8 +104,8 @@ typedef struct {
 #define CARGPARSE_OPTION_STRING(_short_name, _long_name, _help, _flags, _nargs) \
     CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_STR, _short_name, _long_name, _help, _flags, _nargs)
 
-#define CARGPARSE_OPTION_POSITIONAL(_long_name, _help, _flags) \
-    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, _long_name, _help, _flags, 1)
+#define CARGPARSE_OPTION_POSITIONAL(_long_name, _help, _flags, _nargs) \
+    CARGPARSE_OPTION_INIT(CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, _long_name, _help, _flags, _nargs)
 
 void
 cargparse_print_help(const cargparse_t *const self);
@@ -145,7 +145,7 @@ cargparse_get_float_short(const cargparse_t *const self, const char short_name, 
 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,
-                         const char *default_value);
+                         const char *default_value, const unsigned idx);
 
 bool
 cargparse_has_option_long(const cargparse_t *const self, const char *long_name);

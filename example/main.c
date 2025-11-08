@@ -2,7 +2,7 @@
 
 #include "cargparse.h"
 
-/* ./argparse_example test -n 10 11 12 --float 8.001 -10.1 --some-str Some\ str -- pos1 pos2 */
+/* ./argparse_example -n 10 --some-str -vk -- pos1 pos2 pos3 pos4 pos5 -- pos6 pos7 pos */
 int
 main(int argc, char **argv) {
     unsigned idx;
@@ -25,9 +25,9 @@ main(int argc, char **argv) {
             CARGPARSE_OPTION_BOOL('v', "bool2", "bool for something", CARGPARSE_FLAG_NONE),
             CARGPARSE_OPTION_BOOL('k', "bool3", "bool for something", CARGPARSE_FLAG_NONE),
 
-            CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example", CARGPARSE_FLAG_REQUIRED),
-            CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2", CARGPARSE_FLAG_NONE),
-            CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3", CARGPARSE_FLAG_NONE),
+            CARGPARSE_OPTION_POSITIONAL("posit3", "positional argument example number 3", CARGPARSE_FLAG_NONE, CARGPARSE_NARGS_ONE_OR_MORE),
+            CARGPARSE_OPTION_POSITIONAL("positional1", "positional argument example", CARGPARSE_FLAG_REQUIRED, 2),
+            CARGPARSE_OPTION_POSITIONAL("pos2", "positional argument example number 2", CARGPARSE_FLAG_NONE, 1),
     );
     /* clang-format on */
 
@@ -66,22 +66,22 @@ main(int argc, char **argv) {
         idx++;
     }
 
-    if (cargparse_get_positional(&argparse, "positional1", &s, "pos1_default") == CARGPARSE_OK) {
-        printf("Got posit1 value: %s\n", s);
-    } else {
-        printf("Did not find \"posit1\"\n");
+    idx = 0;
+    while (cargparse_get_positional(&argparse, "positional1", &s, "pos1_default", idx) == CARGPARSE_OK) {
+        printf("%u) Got positional1 value: %s\n", idx + 1, s);
+        idx++;
     }
 
-    if (cargparse_get_positional(&argparse, "pos2", &s, "pos2_default") == CARGPARSE_OK) {
+    if (cargparse_get_positional(&argparse, "pos2", &s, "pos2_default", 0) == CARGPARSE_OK) {
         printf("Got posit2 value: %s\n", s);
     } else {
         printf("Did not find \"posit2\"\n");
     }
 
-    if (cargparse_get_positional(&argparse, "posit3", &s, "pos3_default") == CARGPARSE_OK) {
-        printf("Got posit3 value: %s\n", s);
-    } else {
-        printf("Did not find \"posit3\"\n");
+    idx = 0;
+    while (cargparse_get_positional(&argparse, "posit3", &s, "pos3_default", idx) == CARGPARSE_OK) {
+        printf("%u) Got positional3 value: %s\n", idx + 1, s);
+        idx++;
     }
 
     return 0;

@@ -216,13 +216,18 @@ _cargparse_set_parse_res(const cargparse_option_type_e type, char **arg_str, car
 
 static cargparse_err_e
 _cargparse_handle_positional_arg(cargparse_t *const self, char **arg, int *last_pos_i) {
-    *last_pos_i = _cargparse_get_next_positional_opt(self, *last_pos_i);
-    if (*last_pos_i == -1) {
+    if (*last_pos_i == -1 || (self->parse_res[*last_pos_i].is_got &&
+                              self->options[*last_pos_i].nargs != CARGPARSE_NARGS_ONE_OR_MORE &&
+                              self->options[*last_pos_i].nargs != CARGPARSE_NARGS_ZERO_OR_MORE)) {
+        *last_pos_i = _cargparse_get_next_positional_opt(self, *last_pos_i);
+    }
+    if (*last_pos_i != -1) {
+        return _cargparse_set_parse_res(self->options[*last_pos_i].type, arg, &self->parse_res[*last_pos_i],
+                                        &self->options[*last_pos_i]);
+    } else {
         fprintf(stderr, "Error: Unexpected positional argument '%s'\n", *arg);
         return CARGPARSE_ERR_UNEXPECTED_POSITIONAL;
     }
-    return _cargparse_set_parse_res(self->options[*last_pos_i].type, arg, &self->parse_res[*last_pos_i],
-                                    &self->options[*last_pos_i]);
 }
 
 static cargparse_err_e
@@ -309,6 +314,7 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
     bool after_double_hyphen;
     char **arg;
     cargparse_err_e ret;
+    cargparse_arg_type_e type;
 
     if (argc == 1) {
         return CARGPARSE_GOT_ZERO_ARGS;
@@ -324,15 +330,13 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
 
     for (i = 1; i < argc; i++) {
         arg = &argv[i];
+        type = _cargparse_get_arg_type(*arg);
 
-        if (after_double_hyphen) {
-            if ((ret = _cargparse_handle_positional_arg(self, arg, &last_pos_i)) != CARGPARSE_OK) {
-                return ret;
-            }
-            continue;
+        if (after_double_hyphen && type != CARGPARSE_ARG_DOUBLE_HYPHEN) {
+            type = CARGPARSE_ARG_POS;
         }
 
-        switch (_cargparse_get_arg_type(*arg)) {
+        switch (type) {
             case CARGPARSE_ARG_POS:
                 if (opt_idx == -1) {
                     if ((ret = _cargparse_handle_positional_arg(self, arg, &last_pos_i)) != CARGPARSE_OK) {
@@ -382,6 +386,7 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
                     fprintf(stderr, "Error: got '--' when previous option not set\n");
                     return CARGPARSE_ERR_OPTION_NEEDS_ARG;
                 }
+                last_pos_i = _cargparse_get_next_positional_opt(self, last_pos_i);
                 after_double_hyphen = true;
                 opt_idx = -1;
                 break;
@@ -560,9 +565,9 @@ cargparse_get_float_short(const cargparse_t *const self, const char short_name, 
 
 cargparse_err_e
 cargparse_get_positional(const cargparse_t *const self, const char *long_name, const char **valuestr,
-                         const char *default_value) {
+                         const char *default_value, const unsigned idx) {
     return _cargparse_get_value_generic(self, CARGPARSE_OPTION_TYPE_POS, CARGPARSE_NO_SHORT, long_name,
-                                        valuestr, (const void *)default_value, 0);
+                                        valuestr, (const void *)default_value, idx);
 }
 
 static bool
