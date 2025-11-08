@@ -67,10 +67,9 @@
         TEST_EQ(_result, (cargparse_err_e)(_expected_result));                \
     } while (0)
 
-#define TEST_PARSE_RES(_ap, _parse_res, ...)                                  \
+#define TEST_PARSE_RES(_ap, _parse_res, _argv)                                \
     do {                                                                      \
         int i;                                                                \
-        char *_argv[] = {"program", __VA_ARGS__};                             \
         const int _argc = sizeof(_argv) / sizeof(char *);                     \
         const cargparse_err_e _result = cargparse_parse((_ap), _argc, _argv); \
         TEST_EQ(_result, (cargparse_err_e)CARGPARSE_OK);                      \

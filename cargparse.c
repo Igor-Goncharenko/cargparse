@@ -453,7 +453,7 @@ _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_opti
     if (self->options[opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE && self->parse_res[opt_idx].nargs == 0) {
         return CARGPARSE_ZERO_NARGS;
     } else if (self->options[opt_idx].type != CARGPARSE_OPTION_TYPE_BOOL &&
-               narg + 1 > (unsigned)self->parse_res[opt_idx].nargs) {
+               narg + 1 > (unsigned)self->parse_res[opt_idx].nargs && self->parse_res[opt_idx].is_got) {
         return CARGPARSE_ERR_NARG_OUT_OF_RANGE;
     }
     if (!self->parse_res[opt_idx].is_got) {
