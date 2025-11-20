@@ -108,22 +108,13 @@ _cargparse_get_next_positional_opt(const cargparse_t *const self, const int prev
 
 static cargparse_arg_type_e
 _cargparse_get_arg_type(const char *arg) {
-    if (!arg || arg[0] == '\0') {
-        return CARGPARSE_ARG_INCORRECT;
-    }
+    if (!arg || arg[0] == '\0') return CARGPARSE_ARG_INCORRECT;
 
-    if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0') {
-        return CARGPARSE_ARG_DOUBLE_HYPHEN;
-    }
-    if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0' && arg[2] != '-') {
-        return CARGPARSE_ARG_LONG;
-    }
-    if (arg[0] == '-' && (arg[1] == '\0' || isdigit(arg[1]))) {
-        return CARGPARSE_ARG_POS;
-    }
-    if (arg[0] == '-') {
-        return CARGPARSE_ARG_SHORT;
-    }
+    if (arg[0] == '-' && arg[1] == '-' && arg[2] == '\0') return CARGPARSE_ARG_DOUBLE_HYPHEN;
+    if (arg[0] == '-' && arg[1] == '-' && arg[2] != '\0' && arg[2] != '-') return CARGPARSE_ARG_LONG;
+    if (arg[0] == '-' && (arg[1] == '\0' || isdigit(arg[1]))) return CARGPARSE_ARG_POS;
+    if (arg[0] == '-') return CARGPARSE_ARG_SHORT;
+
     return CARGPARSE_ARG_POS;
 }
 
@@ -310,23 +301,15 @@ _cargparse_check_required_options(const cargparse_t *const self) {
 
 cargparse_err_e
 cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
-    int i, opt_idx, last_pos_i;
-    bool after_double_hyphen;
+    int i, opt_idx = -1, last_pos_i = -1;
+    bool after_double_hyphen = false;
     char **arg;
     cargparse_err_e ret;
     cargparse_arg_type_e type;
 
-    if (argc == 1) {
-        return CARGPARSE_GOT_ZERO_ARGS;
-    }
-    if (self == NULL || argv == NULL || argc < 1) {
-        fprintf(stderr, "Error: incorrect arguments passed to cargparse_parse\n");
-        return CARGPARSE_ERR_NULL_ARGUMENT;
-    }
-
-    opt_idx = -1;
-    last_pos_i = -1;
-    after_double_hyphen = false;
+    if (argc == 1) return CARGPARSE_GOT_ZERO_ARGS;
+    if (!self) return CARGPARSE_ERR_NULL_PARSER;
+    if (!argv) return CARGPARSE_ERR_NULL_ARGUMENT;
 
     for (i = 1; i < argc; i++) {
         arg = &argv[i];
@@ -438,22 +421,16 @@ _cargparse_get_check_opt(const cargparse_t *const self, const cargparse_option_t
 }
 
 static cargparse_err_e
-_cargparse_validate_input_params(const cargparse_t *self, const char *long_name, const char short_name,
-                                 const void *result) {
-    if (!self) return CARGPARSE_ERR_NULL_PARSER;
-    if (!long_name && short_name == CARGPARSE_NO_SHORT) return CARGPARSE_ERR_INVALID_OPTION;
-    if (!result) return CARGPARSE_ERR_NULL_OUTPUT;
-    return CARGPARSE_OK;
-}
-
-static cargparse_err_e
 _cargparse_get_value_generic(const cargparse_t *const self, const cargparse_option_type_e type,
                              const char short_name, const char *long_name, void *result,
                              const void *default_value, const unsigned narg) {
+    if (!self) return CARGPARSE_ERR_NULL_PARSER;
+    if (long_name == CARGPARSE_NO_LONG && short_name == CARGPARSE_NO_SHORT)
+        return CARGPARSE_ERR_INVALID_OPTION;
+    if (!result) return CARGPARSE_ERR_NULL_OUTPUT;
+
     cargparse_err_e ret;
-    if ((ret = _cargparse_validate_input_params(self, long_name, short_name, result)) != CARGPARSE_OK) {
-        return ret;
-    }
+
     const int opt_idx = _cargparse_get_check_opt(self, type, short_name, long_name);
     if (opt_idx == -1) {
         return CARGPARSE_ERR_OPTION_UNKNOWN;
@@ -589,6 +566,9 @@ cargparse_has_option_short(const cargparse_t *const self, const char short_name)
 static cargparse_err_e
 _cargparse_get_arg_count(const cargparse_t *const self, const char short_name, const char *long_name,
                          unsigned *count) {
+    if (!self) return CARGPARSE_ERR_NULL_PARSER;
+    if (!count) return CARGPARSE_ERR_NULL_OUTPUT;
+
     int opt_idx = _cargparse_find_opt(self, short_name, long_name);
     if (opt_idx == -1) {
         *count = 0;
