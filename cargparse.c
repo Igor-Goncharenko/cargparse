@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CARGPARSE_MAX_ERR_MSG_LEN 256
+
+static char err_msg_buf[CARGPARSE_MAX_ERR_MSG_LEN] = {0};
+
 typedef enum {
     CARGPARSE_ARG_INCORRECT = -1,
     CARGPARSE_ARG_POS = 0,
@@ -12,6 +16,43 @@ typedef enum {
     CARGPARSE_ARG_LONG,
     CARGPARSE_ARG_DOUBLE_HYPHEN,
 } cargparse_arg_type_e;
+
+static void
+_cargparse_set_err_msg(const char *msg, const char *arg) {
+    size_t msg_len, arg_len, available;
+
+    if (err_msg_buf[0] != '\0' || !msg) return;
+
+    msg_len = strlen(msg);
+
+    if (msg_len >= CARGPARSE_MAX_ERR_MSG_LEN) {
+        msg_len = CARGPARSE_MAX_ERR_MSG_LEN - 1;
+    }
+    memcpy(err_msg_buf, msg, msg_len);
+
+    if (arg && msg_len < CARGPARSE_MAX_ERR_MSG_LEN - 3) {
+        arg_len = strlen(arg);
+        if (msg_len + arg_len + 2 < CARGPARSE_MAX_ERR_MSG_LEN) {
+            err_msg_buf[msg_len] = ':';
+            err_msg_buf[msg_len + 1] = ' ';
+            memcpy(err_msg_buf + msg_len + 2, arg, arg_len);
+            err_msg_buf[msg_len + 2 + arg_len] = '\0';
+        } else {
+            available = CARGPARSE_MAX_ERR_MSG_LEN - msg_len - 3;
+            err_msg_buf[msg_len] = ':';
+            err_msg_buf[msg_len + 1] = ' ';
+            memcpy(err_msg_buf + msg_len + 2, arg, available);
+            err_msg_buf[CARGPARSE_MAX_ERR_MSG_LEN - 1] = '\0';
+        }
+    } else {
+        err_msg_buf[msg_len] = '\0';
+    }
+}
+
+const char *
+cargparse_get_err_msg(void) {
+    return err_msg_buf;
+}
 
 static void
 _cargparse_print_option(const cargparse_option_t *opt) {
@@ -119,22 +160,22 @@ _cargparse_get_arg_type(const char *arg) {
 }
 
 static cargparse_err_e
-_cargparse_parse_int(const char *str, long *result) {
+_cargparse_parse_int(const char *arg, long *result) {
     char *endptr;
     long val;
 
-    if (!str) {
+    if (!arg) {
         return CARGPARSE_ERR_NULL_ARGUMENT;
     }
 
-    val = strtol(str, &endptr, 10);
+    val = strtol(arg, &endptr, 10);
 
-    if (endptr == str) {
-        fprintf(stderr, "Error: not a valid number '%s'\n", str);
+    if (endptr == arg) {
+        _cargparse_set_err_msg("Not a valid integer", arg);
         return CARGPARSE_ERR_INVALID_VALUE;
     }
     if (*endptr != '\0') {
-        fprintf(stderr, "Error: extra characters after number '%s'\n", str);
+        _cargparse_set_err_msg("Extra characters after integer", arg);
         return CARGPARSE_ERR_INVALID_VALUE;
     }
 
@@ -143,22 +184,22 @@ _cargparse_parse_int(const char *str, long *result) {
 }
 
 static cargparse_err_e
-_cargparse_parse_float(const char *str, double *result) {
+_cargparse_parse_float(const char *arg, double *result) {
     char *endptr;
     double val;
 
-    if (!str) {
+    if (!arg) {
         return CARGPARSE_ERR_NULL_ARGUMENT;
     }
 
-    val = strtod(str, &endptr);
+    val = strtod(arg, &endptr);
 
-    if (endptr == str) {
-        fprintf(stderr, "Error: not a valid number '%s'\n", str);
+    if (endptr == arg) {
+        _cargparse_set_err_msg("Not a valid float", arg);
         return CARGPARSE_ERR_INVALID_VALUE;
     }
     if (*endptr != '\0') {
-        fprintf(stderr, "Error: extra characters after number '%s'\n", str);
+        _cargparse_set_err_msg("Extra characters after float", arg);
         return CARGPARSE_ERR_INVALID_VALUE;
     }
 
@@ -216,7 +257,7 @@ _cargparse_handle_positional_arg(cargparse_t *const self, char **arg, int *last_
         return _cargparse_set_parse_res(self->options[*last_pos_i].type, arg, &self->parse_res[*last_pos_i],
                                         &self->options[*last_pos_i]);
     } else {
-        fprintf(stderr, "Error: Unexpected positional argument '%s'\n", *arg);
+        _cargparse_set_err_msg("Unexpected positional argument", *arg);
         return CARGPARSE_ERR_UNEXPECTED_POSITIONAL;
     }
 }
@@ -225,7 +266,7 @@ static cargparse_err_e
 _cargparse_handle_option_arg(cargparse_t *const self, int opt_idx, char **arg) {
     if (self->parse_res[opt_idx].is_got && self->options[opt_idx].nargs != CARGPARSE_NARGS_ONE_OR_MORE &&
         self->options[opt_idx].nargs != CARGPARSE_NARGS_ZERO_OR_MORE) {
-        fprintf(stderr, "Error: option already got\n");
+        _cargparse_set_err_msg("Option already got", *arg);
         return CARGPARSE_ERR_OPTION_ALREADY_SET;
     }
     return _cargparse_set_parse_res(self->options[opt_idx].type, arg, &self->parse_res[opt_idx],
@@ -236,7 +277,7 @@ static cargparse_err_e
 _cargparse_handle_short_option(cargparse_t *const self, const char *arg, int *opt_idx) {
     *opt_idx = _cargparse_search_short_option(self, arg[1]);
     if (*opt_idx == -1) {
-        fprintf(stderr, "Error: unknown option '-%c'\n", arg[1]);
+        _cargparse_set_err_msg("Unknown option", arg);
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
     if (self->options[*opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
@@ -253,7 +294,7 @@ static cargparse_err_e
 _cargparse_handle_long_option(cargparse_t *const self, const char *arg, int *opt_idx) {
     *opt_idx = _cargparse_search_long_option(self, arg + 2);
     if (*opt_idx == -1) {
-        fprintf(stderr, "Error: unknown option '--%s'\n", arg + 2);
+        _cargparse_set_err_msg("Unknown option", arg);
         return CARGPARSE_ERR_OPTION_UNKNOWN;
     }
     if (self->options[*opt_idx].type == CARGPARSE_OPTION_TYPE_BOOL) {
@@ -274,11 +315,11 @@ _cargparse_handle_mult_short_bool_options(cargparse_t *const self, const char *a
     for (i = 1; arg[i] != '\0'; i++) {
         local_opt_idx = _cargparse_search_short_option(self, arg[i]);
         if (local_opt_idx == -1) {
-            fprintf(stderr, "Error: unknown option '-%c'\n", arg[i]);
+            _cargparse_set_err_msg("Unknown option", arg);
             return CARGPARSE_ERR_OPTION_UNKNOWN;
         }
         if (self->options[local_opt_idx].type != CARGPARSE_OPTION_TYPE_BOOL) {
-            fprintf(stderr, "Error: not bool type for option '-%c' in multiple bool definition\n", arg[i]);
+            _cargparse_set_err_msg("Not a bool option in grouped flags", arg);
             return CARGPARSE_ERR_NOT_BOOL_IN_MULT_BOOL_DEF;
         }
         self->parse_res[local_opt_idx].is_got = true;
@@ -341,7 +382,7 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
                     self->options[opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE) {
                     opt_idx = -1;
                 } else if (opt_idx != -1) {
-                    fprintf(stderr, "Error: previous option not set\n");
+                    _cargparse_set_err_msg("previous option not set", NULL); /* TODO: add pointer to arg */
                     return CARGPARSE_ERR_OPTION_NEEDS_ARG;
                 }
                 if (strlen(*arg) > 2 &&
@@ -356,7 +397,7 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
                     self->options[opt_idx].nargs == CARGPARSE_NARGS_ZERO_OR_MORE) {
                     opt_idx = -1;
                 } else if (opt_idx != -1) {
-                    fprintf(stderr, "Error: previous option not set\n");
+                    _cargparse_set_err_msg("previous option not set", NULL); /* TODO: add pointer to arg */
                     return CARGPARSE_ERR_OPTION_NEEDS_ARG;
                 }
                 if ((ret = _cargparse_handle_long_option(self, *arg, &opt_idx)) != CARGPARSE_OK) {
@@ -366,7 +407,7 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
             case CARGPARSE_ARG_DOUBLE_HYPHEN:
                 if (self->options[opt_idx].nargs != CARGPARSE_NARGS_ONE_OR_MORE &&
                     self->options[opt_idx].nargs != CARGPARSE_NARGS_ZERO_OR_MORE && opt_idx != -1) {
-                    fprintf(stderr, "Error: got '--' when previous option not set\n");
+                    _cargparse_set_err_msg("got '--' when previous option not set", NULL);
                     return CARGPARSE_ERR_OPTION_NEEDS_ARG;
                 }
                 last_pos_i = _cargparse_get_next_positional_opt(self, last_pos_i);
@@ -379,12 +420,12 @@ cargparse_parse(cargparse_t *const self, const int argc, char **argv) {
     }
 
     if (opt_idx != -1) {
-        fprintf(stderr, "Error: for last option got but not set\n");
+        _cargparse_set_err_msg("for last option got but not set", NULL); /* TODO: add pointer to arg */
         return CARGPARSE_ERR_OPTION_NEEDS_ARG;
     }
 
     if (!_cargparse_check_required_options(self)) {
-        fprintf(stderr, "Error: not all required options set\n");
+        _cargparse_set_err_msg("Not all required options set", NULL);
         return CARGPARSE_ERR_NOT_ALL_REQUIRED_OPTIONS;
     }
 
@@ -409,12 +450,11 @@ _cargparse_get_check_opt(const cargparse_t *const self, const cargparse_option_t
     const char *opt_name = long_name ? long_name : (short_name != -1 ? &short_name : "unknown");
 
     if (opt_idx == -1) {
-        fprintf(stderr, "Error: unknown option '%s'\n", opt_name);
+        _cargparse_set_err_msg("Unknown option", opt_name);
         return -1;
     }
     if (self->options[opt_idx].type != type) {
-        fprintf(stderr, "Error: incorrect type for option '%s'. Got=%d, expected=%d\n", opt_name,
-                self->options[opt_idx].type, type);
+        _cargparse_set_err_msg("Incorrect type for option", opt_name);
         return -1;
     }
     return opt_idx;

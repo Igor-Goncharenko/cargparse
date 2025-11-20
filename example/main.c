@@ -34,7 +34,8 @@ main(int argc, char **argv) {
     cargparse_print_help(&argparse);
 
     if ((ret = cargparse_parse(&argparse, argc, argv)) != CARGPARSE_OK) {
-        fprintf(stderr, "Failed to parse options: %d\n", ret);
+        const char *msg = cargparse_get_err_msg();
+        fprintf(stderr, "Failed to parse options: code=%d, err_msg=\"%s\"\n", ret, msg);
         return 1;
     }
 

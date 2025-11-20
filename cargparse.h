@@ -108,6 +108,9 @@ typedef struct {
 void
 cargparse_print_help(const cargparse_t *const self);
 
+const char *
+cargparse_get_err_msg(void);
+
 cargparse_err_e
 cargparse_parse(cargparse_t *const self, const int argc, char **argv);
 
